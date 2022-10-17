@@ -6,8 +6,24 @@ class RLLoader():
         self.env_config = env_config
         self.agent_config = agent_config
 
-    def env_loader(self):
+    def env_loader(self): # Todo
         if self.env_config['env_name'] == 'LunarLanderContinuous-v2':
+            env = gym.make(self.env_config['env_name'])
+            obs_space = env.observation_space.shape
+            act_space = env.action_space.shape
+        elif self.env_config['env_name'] == 'LunarLanderContinuous-v2':
+            env = gym.make(self.env_config['env_name'])
+            obs_space = env.observation_space.shape
+            act_space = env.action_space.shape
+        elif self.env_config['env_name'] == 'LunarLanderContinuous-v2':
+            env = gym.make(self.env_config['env_name'])
+            obs_space = env.observation_space.shape
+            act_space = env.action_space.shape
+        elif self.env_config['env_name'] == 'LunarLanderContinuous-v2':
+            env = gym.make(self.env_config['env_name'])
+            obs_space = env.observation_space.shape
+            act_space = env.action_space.shape
+        elif self.env_config['env_name'] == 'LunarLanderContinuous-v2':
             env = gym.make(self.env_config['env_name'])
             obs_space = env.observation_space.shape
             act_space = env.action_space.shape
@@ -20,19 +36,34 @@ class RLLoader():
 
     def agent_loader(self):
         if self.agent_config['agent_name'] == 'Q-PAMDP':
-            from agents.Q_PAMDP import Agent
+            if False:
+                pass
+            else:
+                from agents.Q_PAMDP import Agent
 
         elif self.agent_config['agent_name'] == 'PA-DDPG':
-            from agents.PA_DDPG import Agent
+            if False:
+                pass
+            else:
+                from agents.PA_DDPG import Agent
 
         elif self.agent_config['agent_name'] == 'P-DQN':
-            from agents.P_DQN import Agent
+            if False:
+                pass
+            else:
+                from agents.P_DQN import Agent
 
         elif self.agent_config['agent_name'] == 'MP-DQN':
-            from agents.MP_DQN import Agent
+            if False:
+                pass
+            else:
+                from agents.MP_DQN import Agent
 
         elif self.agent_config['agent_name'] == 'HPPO':
-            from agents.HPPO import Agent
+            if False:
+                pass
+            else:
+                from agents.HPPO import Agent
 
         else:
             raise ValueError('Please try to set the correct Agent')

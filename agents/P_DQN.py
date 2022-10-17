@@ -12,18 +12,6 @@ from tensorflow.keras.layers import Dense
 from utils.prioritized_memory_numpy import PrioritizedMemory
 from utils.replay_buffer import ExperienceMemory
 
-# gpus = tf.config.experimental.list_physical_devices('GPU')
-# if gpus:
-#     try:
-#         for gpu in gpus:
-#             tf.config.experimental.set_memory_growth(gpu, True)
-#             tf.config.experimental.set_virtual_device_configuration(gpu, [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=1500)])
-#         logical_gpus = tf.config.experimental.list_logical_devices('GPU')
-#         print(len(gpus), " Physical GPUs, ", len(logical_gpus), " Logical GPUs")
-#     except RuntimeError as e:
-#         print(e)
-
-# tf.compat.v1.enable_eager_execution()
 
 class ContinuousActor(Model):
     def __init__(self, cont_action_space):
@@ -45,6 +33,7 @@ class ContinuousActor(Model):
 
         return mu
 
+
 class DiscreteActor(Model):
     def __init__(self, disc_action_space):
         super(DiscreteActor,self).__init__()
@@ -65,6 +54,7 @@ class DiscreteActor(Model):
         value = self.value(l4)
 
         return value
+
 
 class Agent:
     """

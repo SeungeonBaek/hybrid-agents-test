@@ -13,6 +13,7 @@ PA-DDPG(~ing)
 P-DQN  
 MP-DQN(~ing)  
 HPPO(~ing)  
+HHQN(~ing)  
 
 ## RL extension algorithms
 Prioritized Experience Replay(PER)   

@@ -111,15 +111,20 @@ def main(env_config: Dict, agent_config: Dict, rl_confing: Dict, data_save_path:
 if __name__ == '__main__':
     """
     Env
-    1: LunarLander-v2, 2: pg-drive 3: dometstic env
+    1: Goal, 2: Platform 3: Catch point
+    4: Hard Goal, 5: Hard move, 6: Domestic
 
     Agent
-    1: Q-PAMDP, 2: PA-DDPG, 3: P-DQN
-    4: MP-DQN,  5: HPPO
+    1:  Q-PAMDP,  2:
+    5:  PA-DDPG,  6: PA-TD3,   7: PA-gSDE,   8: PA-TQC
+    9:  P-DQN,   10: P-DDQN,  11: P-TDDQN,  12: P-DQN-gSDE
+    13: MP-DQN,  14: MP-DDQN, 15: MP-TDDQN, 16: MP-DQN-gSDE
+    17: HPPO,    18:
+    21: HHQN,    22:
     """
     
     env_switch = 3
-    agent_switch = 3
+    agent_switch = 9
 
     env_config, agent_config = env_agent_config(env_switch, agent_switch)
     
