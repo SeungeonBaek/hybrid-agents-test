@@ -1,6 +1,5 @@
 import gym
 
-
 class RLLoader():
     def __init__(self, env_config, agent_config):
         self.env_config = env_config
@@ -42,20 +41,32 @@ class RLLoader():
                 from agents.Q_PAMDP import Agent
 
         elif self.agent_config['agent_name'] == 'PA-DDPG':
-            if False:
-                pass
+            if self.agent_config['extension']['name'] == 'Double':
+                from agents.PA_DDPG import Agent
+            elif self.agent_config['extension']['name'] == 'Variation1':
+                from agents.Target7 import Agent
+            elif self.agent_config['extension']['name'] == 'Variation2':
+                from agents.Target8 import Agent
             else:
                 from agents.PA_DDPG import Agent
 
         elif self.agent_config['agent_name'] == 'P-DQN':
-            if False:
-                pass
+            if self.agent_config['extension']['name'] == 'Double':
+                from agents.P_DQN import Agent
+            elif self.agent_config['extension']['name'] == 'Variation1':
+                from agents.Target11 import Agent
+            elif self.agent_config['extension']['name'] == 'Variation2':
+                from agents.Target12 import Agent
             else:
                 from agents.P_DQN import Agent
 
         elif self.agent_config['agent_name'] == 'MP-DQN':
-            if False:
-                pass
+            if self.agent_config['extension']['name'] == 'Double':
+                from agents.MP_DQN import Agent
+            elif self.agent_config['extension']['name'] == 'Variation1':
+                from agents.Target15 import Agent
+            elif self.agent_config['extension']['name'] == 'Variation2':
+                from agents.Target16 import Agent
             else:
                 from agents.MP_DQN import Agent
 
@@ -64,6 +75,24 @@ class RLLoader():
                 pass
             else:
                 from agents.HPPO import Agent
+
+        elif self.agent_config['agent_name'] == 'HHQN':
+            if False:
+                pass
+            else:
+                from agents.HHQN import Agent
+
+        elif self.agent_config['agent_name'] == 'Target25':
+            if False:
+                pass
+            else:
+                from agents.Target25 import Agent
+
+        elif self.agent_config['agent_name'] == 'Target29':
+            if False:
+                pass
+            else:
+                from agents.Target29 import Agent
 
         else:
             raise ValueError('Please try to set the correct Agent')

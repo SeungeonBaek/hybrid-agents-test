@@ -1,3 +1,5 @@
+
+
 class RLLogger():
     def __init__(self, agent_config, rl_config, summary_writer = None, wandb_session = None):
         self.agent_config = agent_config
@@ -18,51 +20,155 @@ class RLLogger():
             self.episode_logging_wandb(Agent, episode_score, episode_step, episode_num, episode_rewards)
 
     def step_logging_tensorboard(self, Agent):
+        # update
         if self.agent_config['agent_name'] == 'Q-PAMDP':
-            updated, actor_loss, critic_loss, trgt_q_mean, critic_value= Agent.update()
+            if self.agent_config['extension']['name'] == 'Double': # Todo
+                updated, actor_loss, critic_loss, trgt_q_mean, critic_value= Agent.update()
+            elif self.agent_config['extension']['name'] == 'Variation1':
+                updated, actor_loss, critic_loss, trgt_q_mean, critic_value= Agent.update()
+            elif self.agent_config['extension']['name'] == 'Variation2':
+                updated, actor_loss, critic_loss, trgt_q_mean, critic_value= Agent.update()
+            else: # Todo
+                updated, actor_loss, critic_loss, trgt_q_mean, critic_value= Agent.update()
 
         elif self.agent_config['agent_name'] == 'PA-DDPG':
-            updated, actor_loss, critic_loss, trgt_q_mean, critic_1_value, critic_2_value = Agent.update()
+            if self.agent_config['extension']['name'] == 'Double': # Todo
+                updated, actor_loss, critic_loss, trgt_q_mean, critic_value= Agent.update()
+            elif self.agent_config['extension']['name'] == 'Variation1':
+                updated, actor_loss, critic_loss, trgt_q_mean, critic_value= Agent.update()
+            elif self.agent_config['extension']['name'] == 'Variation2':
+                updated, actor_loss, critic_loss, trgt_q_mean, critic_value= Agent.update()
+            else: # Todo
+                updated, actor_loss, critic_loss, trgt_q_mean, critic_value= Agent.update()
 
         elif self.agent_config['agent_name'] == 'P-DQN':
-            updated, actor_loss, critic_loss, trgt_q_mean, critic_value, critic_q_value = Agent.update()
+            if self.agent_config['extension']['name'] == 'Double': # Todo
+                updated, actor_loss, critic_loss, trgt_q_mean, critic_value= Agent.update()
+            elif self.agent_config['extension']['name'] == 'Variation1':
+                updated, actor_loss, critic_loss, trgt_q_mean, critic_value= Agent.update()
+            elif self.agent_config['extension']['name'] == 'Variation2':
+                updated, actor_loss, critic_loss, trgt_q_mean, critic_value= Agent.update()
+            else: # Todo
+                updated, actor_loss, critic_loss, trgt_q_mean, critic_value= Agent.update()
 
         elif self.agent_config['agent_name'] == 'MP-DQN':
-            updated, alpha_loss, actor_loss, critic_1_loss, critic_2_loss, trgt_q_mean, critic_1_value, critic_2_value = Agent.update()
+            if self.agent_config['extension']['name'] == 'Double': # Todo
+                updated, actor_loss, critic_loss, trgt_q_mean, critic_value= Agent.update()
+            elif self.agent_config['extension']['name'] == 'Variation1':
+                updated, actor_loss, critic_loss, trgt_q_mean, critic_value= Agent.update()
+            elif self.agent_config['extension']['name'] == 'Variation2':
+                updated, actor_loss, critic_loss, trgt_q_mean, critic_value= Agent.update()
+            else: # Todo
+                updated, actor_loss, critic_loss, trgt_q_mean, critic_value= Agent.update()
 
         elif self.agent_config['agent_name'] == 'HPPO':
             updated, std, entropy, ratio, actor_loss, advantage, target_val, critic_value, critic_loss = Agent.update()
 
+        elif self.agent_config['agent_name'] == 'HHQN':
+            updated, std, entropy, ratio, actor_loss, advantage, target_val, critic_value, critic_loss = Agent.update()
+
+        elif self.agent_config['agent_name'] == 'Target25':
+            updated, std, entropy, ratio, actor_loss, advantage, target_val, critic_value, critic_loss = Agent.update()
+
+        elif self.agent_config['agent_name'] == 'Target29':
+            updated, std, entropy, ratio, actor_loss, advantage, target_val, critic_value, critic_loss = Agent.update()
+
+        # logging
         if self.agent_config['agent_name'] == 'Q-PAMDP':
             if updated:
                 self.summary_writer.add_scalar('01_Loss/Critic_loss', critic_loss, Agent.update_step)
                 self.summary_writer.add_scalar('01_Loss/Actor_loss', actor_loss, Agent.update_step)
                 self.summary_writer.add_scalar('02_Critic/Target_Q_mean', trgt_q_mean, Agent.update_step)
                 self.summary_writer.add_scalar('02_Critic/Critic_value', critic_value, Agent.update_step)
+
+                if self.agent_config['extension']['name'] == 'Double':
+                    self.summary_writer.add_scalar('01_Loss/Critic_loss', critic_loss, Agent.update_step)
+                elif self.agent_config['extension']['name'] == 'Variation1':
+                    self.summary_writer.add_scalar('01_Loss/Critic_loss', critic_loss, Agent.update_step)
+                elif self.agent_config['extension']['name'] == 'Variation2':
+                    self.summary_writer.add_scalar('01_Loss/Critic_loss', critic_loss, Agent.update_step)
+                else:
+                    pass
+
         elif self.agent_config['agent_name'] == 'PA-DDPG':
-            if updated:
+            if updated: # Todo
                 self.summary_writer.add_scalar('01_Loss/Critic_loss', critic_loss, Agent.update_step)
                 self.summary_writer.add_scalar('01_Loss/Actor_loss', actor_loss, Agent.update_step)
+                self.summary_writer.add_scalar('02_Critic/Target_Q_mean', trgt_q_mean, Agent.update_step)
+                self.summary_writer.add_scalar('02_Critic/Critic_value', critic_value, Agent.update_step)
+
+                if self.agent_config['extension']['name'] == 'Double':  # Todo
+                    self.summary_writer.add_scalar('01_Loss/Critic_loss', critic_loss, Agent.update_step)
+                elif self.agent_config['extension']['name'] == 'Variation1':
+                    self.summary_writer.add_scalar('01_Loss/Critic_loss', critic_loss, Agent.update_step)
+                elif self.agent_config['extension']['name'] == 'Variation2':
+                    self.summary_writer.add_scalar('01_Loss/Critic_loss', critic_loss, Agent.update_step)
+                else:
+                    pass
+
+        elif self.agent_config['agent_name'] == 'P-DQN':
+            if updated:  # Todo
+                self.summary_writer.add_scalar('01_Loss/Critic_loss', critic_loss, Agent.update_step)
+                self.summary_writer.add_scalar('01_Loss/Actor_loss', actor_loss, Agent.update_step)
+                self.summary_writer.add_scalar('02_Critic/Target_Q_mean', trgt_q_mean, Agent.update_step)
+                self.summary_writer.add_scalar('02_Critic/Critic_value', critic_value, Agent.update_step)
+
+                if self.agent_config['extension']['name'] == 'Double':  # Todo
+                    self.summary_writer.add_scalar('01_Loss/Critic_loss', critic_loss, Agent.update_step)
+                elif self.agent_config['extension']['name'] == 'Variation1':
+                    self.summary_writer.add_scalar('01_Loss/Critic_loss', critic_loss, Agent.update_step)
+                elif self.agent_config['extension']['name'] == 'Variation2':
+                    self.summary_writer.add_scalar('01_Loss/Critic_loss', critic_loss, Agent.update_step)
+                else:
+                    pass
+
+        elif self.agent_config['agent_name'] == 'MP-DQN':
+            if updated:  # Todo
+                self.summary_writer.add_scalar('01_Loss/Critic_loss', critic_loss, Agent.update_step)
+                self.summary_writer.add_scalar('01_Loss/Actor_loss', actor_loss, Agent.update_step)
+                self.summary_writer.add_scalar('02_Critic/Target_Q_mean', trgt_q_mean, Agent.update_step)
+                self.summary_writer.add_scalar('02_Critic/Critic_value', critic_value, Agent.update_step)
+
+                if self.agent_config['extension']['name'] == 'Double':  # Todo
+                    self.summary_writer.add_scalar('01_Loss/Critic_loss', critic_loss, Agent.update_step)
+                elif self.agent_config['extension']['name'] == 'Variation1':
+                    self.summary_writer.add_scalar('01_Loss/Critic_loss', critic_loss, Agent.update_step)
+                elif self.agent_config['extension']['name'] == 'Variation2':
+                    self.summary_writer.add_scalar('01_Loss/Critic_loss', critic_loss, Agent.update_step)
+                else:
+                    pass
+
+        elif self.agent_config['agent_name'] == 'HPPO':
+            if updated:
+                self.summary_writer.add_scalar('01_Loss/Critic_1_loss', critic_1_loss, Agent.update_step)
+                self.summary_writer.add_scalar('01_Loss/Critic_2_loss', critic_2_loss, Agent.update_step)
+                self.summary_writer.add_scalar('01_Loss/Actor_loss', actor_loss, Agent.update_step)
+                self.summary_writer.add_scalar('01_Loss/Alpha_loss', alpha_loss, Agent.update_step)
                 self.summary_writer.add_scalar('02_Critic/Target_Q_mean', trgt_q_mean, Agent.update_step)
                 self.summary_writer.add_scalar('02_Critic/Critic_1_value', critic_1_value, Agent.update_step)
                 self.summary_writer.add_scalar('02_Critic/Critic_2_value', critic_2_value, Agent.update_step)
-        elif self.agent_config['agent_name'] == 'P-DQN':
+
+        elif self.agent_config['agent_name'] == 'HHQN':
             if updated:
-                self.summary_writer.add_scalar('01_Loss/Critic_loss', critic_loss, Agent.update_step)
+                self.summary_writer.add_scalar('01_Loss/Critic_1_loss', critic_1_loss, Agent.update_step)
+                self.summary_writer.add_scalar('01_Loss/Critic_2_loss', critic_2_loss, Agent.update_step)
                 self.summary_writer.add_scalar('01_Loss/Actor_loss', actor_loss, Agent.update_step)
-                self.summary_writer.add_scalar('02_Critic/Advantage', advantage, Agent.update_step)
-                self.summary_writer.add_scalar('02_Critic/Target_value', target_val, Agent.update_step)
-                self.summary_writer.add_scalar('02_Critic/Critic_value', critic_value, Agent.update_step)
-                self.summary_writer.add_scalar('03_Actor/Entropy', entropy, Agent.update_step)
-                self.summary_writer.add_scalar('03_Actor/Std_dev', std, Agent.update_step)
-                self.summary_writer.add_scalar('03_Actor/Ratio', ratio, Agent.update_step)
-        elif self.agent_config['agent_name'] == 'MP-DQN':
-            if updated:
-                self.summary_writer.add_scalar('01_Loss/Critic_loss', critic_loss, Agent.update_step)
-                self.summary_writer.add_scalar('01_Loss/Actor_loss', actor_loss, Agent.update_step)
+                self.summary_writer.add_scalar('01_Loss/Alpha_loss', alpha_loss, Agent.update_step)
                 self.summary_writer.add_scalar('02_Critic/Target_Q_mean', trgt_q_mean, Agent.update_step)
-                self.summary_writer.add_scalar('02_Critic/Critic_value', critic_value, Agent.update_step)
-        elif self.agent_config['agent_name'] == 'HPPO':
+                self.summary_writer.add_scalar('02_Critic/Critic_1_value', critic_1_value, Agent.update_step)
+                self.summary_writer.add_scalar('02_Critic/Critic_2_value', critic_2_value, Agent.update_step)
+
+        elif self.agent_config['agent_name'] == 'Target25':
+            if updated:
+                self.summary_writer.add_scalar('01_Loss/Critic_1_loss', critic_1_loss, Agent.update_step)
+                self.summary_writer.add_scalar('01_Loss/Critic_2_loss', critic_2_loss, Agent.update_step)
+                self.summary_writer.add_scalar('01_Loss/Actor_loss', actor_loss, Agent.update_step)
+                self.summary_writer.add_scalar('01_Loss/Alpha_loss', alpha_loss, Agent.update_step)
+                self.summary_writer.add_scalar('02_Critic/Target_Q_mean', trgt_q_mean, Agent.update_step)
+                self.summary_writer.add_scalar('02_Critic/Critic_1_value', critic_1_value, Agent.update_step)
+                self.summary_writer.add_scalar('02_Critic/Critic_2_value', critic_2_value, Agent.update_step)
+
+        elif self.agent_config['agent_name'] == 'Target29':
             if updated:
                 self.summary_writer.add_scalar('01_Loss/Critic_1_loss', critic_1_loss, Agent.update_step)
                 self.summary_writer.add_scalar('01_Loss/Critic_2_loss', critic_2_loss, Agent.update_step)
@@ -133,7 +239,7 @@ class RLLogger():
                 }, step=self.Agent.update_step)
 
     def episode_logging_tensorboard(self, Agent, episode_score, episode_step, episode_num, episode_rewards):
-        if self.agent_config['agent_name'] == 'P-DQN':
+        if self.agent_config['agent_name'] == 'P-DQN': # Todo
             pass
 
         self.summary_writer.add_scalar('00_Episode/Score', episode_score, episode_num)

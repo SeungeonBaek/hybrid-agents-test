@@ -2,6 +2,8 @@ import gym
 import numpy as np
 import gym_platform
 
+
+#Todo
 def goal_env_test():
     env = gym.make('Platform-v0')
 
@@ -156,7 +158,7 @@ if __name__ == "__main__":
     4: Hard Goal, 5: Hard move, 6: Domestic
     """
 
-    env_switch = 7
+    env_switch = 1
 
     if env_switch == 1:
         goal_env_test()
