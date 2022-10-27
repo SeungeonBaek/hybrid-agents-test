@@ -115,12 +115,12 @@ if __name__ == '__main__':
     4: Hard Goal, 5: Hard move, 6: Domestic
 
     Agent
-    1:  Q-PAMDP,  2:
-    5:  PA-DDPG,  6: PA-TD3,   7: PA-gSDE,   8: PA-TQC
-    9:  P-DQN,   10: P-DDQN,  11: P-TDDQN,  12: P-DQN-gSDE
-    13: MP-DQN,  14: MP-DDQN, 15: MP-TDDQN, 16: MP-DQN-gSDE
-    17: HPPO,    18:
-    21: HHQN,    22:
+    1:  Q-PAMDP,  2: 
+    5:  PA-DDPG,  6: PA-TDDPG,  7: PA-DDPG variation 1,  8: PA-DDPG variation 2
+    9:  P-DQN,   10: P-TDDQN,  11: P-DQN variation 1,   12: P-DQN variation 2
+    13: MP-DQN,  14: MP-TDDQN, 15: MP-DQN variation 1,  16: MP-DQN variation 2
+    17: HPPO,    18: 
+    21: HHQN,    22: 
     """
     
     env_switch = 3
