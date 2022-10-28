@@ -1,6 +1,8 @@
+from typing import Dict, Union, Any
+from numpy.typing import NDArray
+
 import tensorflow as tf
 import numpy as np
-import copy
 import tensorflow_probability as tfp
 
 from tensorflow.keras.optimizers import Adam
@@ -12,51 +14,60 @@ from tensorflow.keras.layers import Dense
 from utils.prioritized_memory_numpy import PrioritizedMemory
 from utils.replay_buffer import ExperienceMemory
 
+import copy
+
 
 class ContinuousActor(Model):
-    def __init__(self, cont_action_space):
+    def __init__(self,
+                 continuous_act_space: int):
         super(ContinuousActor,self).__init__()
-        self.initializer = initializers.he_normal()
-        self.regularizer = regularizers.l2(l=0.005)
-        self.l1 = Dense(256, activation = 'relu', kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
-        self.l2 = Dense(128, activation = 'relu', kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
-        self.l3 = Dense(64, activation = 'relu', kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
-        self.l4 = Dense(32, activation = 'relu', kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
-        self.mu = Dense(cont_action_space, activation='tanh')
+        self.continuous_act_space = continuous_act_space
 
-    def call(self, state):
+        self.initializer = initializers.he_normal()
+        self.regularizer = regularizers.l2(l=0.0005)
+
+        self.l1 = Dense(256, activation = 'relu', kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
+        self.l1_ln = LayerNormalization(axis=-1)
+        self.l2 = Dense(256, activation = 'relu', kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
+        self.l2_ln = LayerNormalization(axis=-1)
+        self.mu = Dense(self.continuous_act_space, activation='tanh')
+
+    def call(self, state: Union[NDArray, tf.Tensor])-> tf.Tensor:
         l1 = self.l1(state)
-        l2 = self.l2(l1)
-        l3 = self.l3(l2)
-        l4 = self.l4(l3)
-        mu = self.mu(l4)
+        l1_ln = self.l1_ln(l1)
+        l2 = self.l2(l1_ln)
+        l2_ln = self.l2_ln(l2)
+        mu = self.mu(l2_ln)
 
         return mu
 
 
 class DiscreteActor(Model):
-    def __init__(self, disc_action_space):
+    def __init__(self,
+                 discrete_act_spac:int):
         super(DiscreteActor,self).__init__()
-        self.initializer = initializers.he_normal()
-        self.regularizer = regularizers.l2(l=0.005)
+        self.discrete_act_spac = discrete_act_spac
+
+        self.initializer = initializers.glorot_normal()
+        self.regularizer = regularizers.l2(l=0.0005)
 
         self.l1 = Dense(256, activation = 'relu' , kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
-        self.l2 = Dense(128, activation = 'relu' , kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
-        self.l3 = Dense(64, activation = 'relu' , kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
-        self.l4 = Dense(32, activation = 'relu' , kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
-        self.value = tf.keras.layers.Dense(disc_action_space, activation = None)
+        self.l1_ln = LayerNormalization(axis=-1)
+        self.l2 = Dense(256, activation = 'relu' , kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
+        self.l2_ln = LayerNormalization(axis=-1)
+        self.value = tf.keras.layers.Dense(self.discrete_act_spac, activation = None)
 
-    def call(self, state_cont_action):
-        l1 = self.l1(state_cont_action) # 확인
+    def call(self, state: Union[NDArray, tf.Tensor])-> tf.Tensor:
+        l1 = self.l1(state)
+        l1_ln = self.l1_ln(l1)
         l2 = self.l2(l1)
-        l3 = self.l3(l2)
-        l4 = self.l4(l3)
-        value = self.value(l4)
+        l2_ln = self.l2_ln(l2)
+        value = self.value(l2_ln)
 
         return value
 
 
-class Agent:
+class Agent: # Todo
     """
     input argument: obs_space, disc_act_space, cont_act_space, action_config, agent_config
 

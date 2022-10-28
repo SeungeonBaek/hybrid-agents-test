@@ -1,17 +1,20 @@
+"""
+
+"""
 
 def env_agent_config(env_switch, agent_switch):
     if env_switch == 1:
-        env_config = {'env_name': 'Goal', 'seed': 777, 'render': False, 'max_step': 500, 'max_episode': 50000}
+        env_config = {'env_name': 'Goal', 'seed': 777, 'render': False, 'max_step': 1000, 'max_episode': 50000}
     elif env_switch == 2:
-        env_config = {'env_name': 'Platform', 'seed': 777, 'render': False, 'max_step': 1000, 'max_episode': 501}
+        env_config = {'env_name': 'Platform', 'seed': 777, 'render': False, 'max_step': 1000, 'max_episode': 50000}
     elif env_switch == 3:
-        env_config = {'env_name': 'Catch point', 'seed': 777, 'render': False, 'max_step': 1000, 'max_episode': 501}
+        env_config = {'env_name': 'Move', 'seed': 777, 'render': False, 'max_step': 1000, 'max_episode': 5000}
     elif env_switch == 4:
-        env_config = {'env_name': 'Hard Goal', 'seed': 777, 'render': False, 'max_step': 1000, 'max_episode': 501}
+        env_config = {'env_name': 'Hard Goal', 'seed': 777, 'render': False, 'max_step': 1000, 'max_episode': 5000} # Todo
     elif env_switch == 5:
-        env_config = {'env_name': 'Hard move', 'seed': 777, 'render': False, 'max_step': 1000, 'max_episode': 501}
+        env_config = {'env_name': 'Hard move', 'seed': 777, 'render': False, 'max_step': 1000, 'max_episode': 5000} # Todo
     elif env_switch == 6:
-        env_config = {'env_name': 'TrafficSignalControl', 'seed': 777, 'render': False, 'max_step': 1000, 'max_episode': 501}
+        env_config = {'env_name': 'TrafficSignalControl', 'seed': 777, 'render': False, 'max_step': 1000, 'max_episode': 5000} # Todo
     else:
         raise ValueError('Please try to correct env_switch')
 

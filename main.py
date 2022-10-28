@@ -112,7 +112,7 @@ def main(env_config: Dict, agent_config: Dict, rl_confing: Dict, data_save_path:
 if __name__ == '__main__':
     """
     Env
-    1: Goal, 2: Platform 3: Catch point
+    1: Goal, 2: Platform 3: Move
     4: Hard Goal, 5: Hard move, 6: Domestic
 
     Agent

@@ -1,37 +1,52 @@
 import gym
 
+"""
+
+"""
+
+
 class RLLoader():
     def __init__(self, env_config, agent_config):
         self.env_config = env_config
         self.agent_config = agent_config
 
-    def env_loader(self): # Todo
-        if self.env_config['env_name'] == 'LunarLanderContinuous-v2':
+    def env_loader(self):
+        if self.env_config['env_name'] == 'Goal':
+            env = gym.make('Goal-v0')
+            obs_space = observation_space.spaces[0].shape + 1 #((obs), time)
+            discrete_act_space = env.action_space.spaces[0].n
+            continuous_act_space = env.action_space.spaces[1].spaces[0].shape[0] + env.action_space.spaces[1].spaces[1].shape[0] + env.action_space.spaces[1].spaces[2].shape[0]
+
+        elif self.env_config['env_name'] == 'Platform':
+            env = gym.make('Platform-v0')
+            obs_space = observation_space.spaces[0].shape + 1 #((obs), time)
+            discrete_act_space = env.action_space.spaces[0].n
+            continuous_act_space = env.action_space.spaces[1].spaces[0].shape[0] + env.action_space.spaces[1].spaces[1].shape[0] + env.action_space.spaces[1].spaces[2].shape[0]
+
+        elif self.env_config['env_name'] == 'Move':
+            env = gym.make('Moving-v0')
+            obs_space = env.observation_space.shape
+            discrete_act_space = env.action_space.spaces[0].n
+            continuous_act_space = env.action_space.spaces[1].shape[0]
+
+        elif self.env_config['env_name'] == 'Hard-Move': # Todo
             env = gym.make(self.env_config['env_name'])
             obs_space = env.observation_space.shape
-            act_space = env.action_space.shape
-        elif self.env_config['env_name'] == 'LunarLanderContinuous-v2':
+            discrete_act_space = env.action_space.spaces[0].n
+            continuous_act_space = env.action_space.spaces[1].shape[0]
+
+        elif self.env_config['env_name'] == 'Hard-Goal': # Todo
             env = gym.make(self.env_config['env_name'])
             obs_space = env.observation_space.shape
-            act_space = env.action_space.shape
-        elif self.env_config['env_name'] == 'LunarLanderContinuous-v2':
-            env = gym.make(self.env_config['env_name'])
-            obs_space = env.observation_space.shape
-            act_space = env.action_space.shape
-        elif self.env_config['env_name'] == 'LunarLanderContinuous-v2':
-            env = gym.make(self.env_config['env_name'])
-            obs_space = env.observation_space.shape
-            act_space = env.action_space.shape
-        elif self.env_config['env_name'] == 'LunarLanderContinuous-v2':
-            env = gym.make(self.env_config['env_name'])
-            obs_space = env.observation_space.shape
-            act_space = env.action_space.shape
-        elif self.env_config['env_name'] == 'domestic':
+            discrete_act_space = env.action_space.spaces[0].n
+            continuous_act_space = env.action_space.spaces[1].shape[0]
+
+        elif self.env_config['env_name'] == 'domestic': # Todo
             env = gym.make('nota-its-v0')
             obs_space = env.observation_space.shape
             act_space = env.action_space.shape
 
-        return env, obs_space, act_space
+        return env, obs_space, discrete_act_space, continuous_act_space
 
     def agent_loader(self):
         if self.agent_config['agent_name'] == 'Q-PAMDP':

@@ -1,106 +1,152 @@
 import gym
 import numpy as np
+import gym_goal
 import gym_platform
+import gym_hybrid
+from time import sleep
+
+
+def goal_env_test():
+    env = gym.make('Goal-v0')
+
+    # Check the space
+    print(f'action_space : {env.action_space}')
+    print(env.action_space.spaces[0])
+    print(env.action_space.spaces[1].spaces[0], env.action_space.spaces[1].spaces[1], env.action_space.spaces[1].spaces[2])
+    print(f'discrete_action_space: {env.action_space.spaces[0].n}, \
+        continuous_action_space: {env.action_space.spaces[1].spaces[0].shape[0] + env.action_space.spaces[1].spaces[1].shape[0] + env.action_space.spaces[1].spaces[2].shape[0]}')
+    print(f'observation_space : {env.observation_space}')
+    print(f'observation_space.spaces[0] : {env.observation_space.spaces[0]}')
+    print(f'observation_space.spaces[1] : {env.observation_space.spaces[1]}')
+    print(f'observation_space.spaces[0].shape : {env.observation_space.spaces[0].shape}')
+    print(f'observation_space.spaces[1].shape : {env.observation_space.spaces[1].shape}')
+
+    # Check the value, rendering
+    obs = env.reset()
+
+    for i in range(10):
+        action = env.action_space.sample()
+        obs, reward, done, info = env.step(action)
+        env.render()
+
+    print(f'action: {action}')
+    print(f'obs: {obs}')
+    print(f'reward: {reward}')
+    print(f'done: {done}')
+    print(f'info: {info}')
+
+    obs = np.append(obs[:-1][0],obs[-1])
+    flat_obs = obs
+
+    print('original : ', np.shape(obs))
+    print('flat_obs : ', np.shape(flat_obs))
+
+
+def platform_env_test():
+    env = gym.make('Platform-v0')
+
+    # Check the space
+    print(f'action_space : {env.action_space}')
+    print(env.action_space.spaces[0])
+    print(env.action_space.spaces[1].spaces[0], env.action_space.spaces[1].spaces[1], env.action_space.spaces[1].spaces[2])
+    print(f'discrete_action_space: {env.action_space.spaces[0].n}, \
+        continuous_action_space: {env.action_space.spaces[1].spaces[0].shape[0] + env.action_space.spaces[1].spaces[1].shape[0] + env.action_space.spaces[1].spaces[2].shape[0]}')
+    print(f'observation_space : {env.observation_space}')
+    print(f'observation_space.spaces[0] : {env.observation_space.spaces[0]}')
+    print(f'observation_space.spaces[1] : {env.observation_space.spaces[1]}')
+    print(f'observation_space.spaces[0].shape : {env.observation_space.spaces[0].shape}')
+    print(f'observation_space.spaces[1].shape : {env.observation_space.spaces[1].shape}')
+
+    # Check the value, rendering
+    obs = env.reset()
+
+    for i in range(10):
+        action = env.action_space.sample()
+        obs, reward, done, info = env.step(action)
+        env.render()
+
+    print(f'action: {action}')
+    print(f'obs: {obs}')
+    print(f'reward: {reward}')
+    print(f'done: {done}')
+    print(f'info: {info}')
+
+    obs = np.append(obs[:-1][0],obs[-1])
+    flat_obs = obs.reshape(-1)
+
+    print('original : ', np.shape(obs))
+    print('flat_obs : ', np.shape(flat_obs))
+
+
+def move_env_test():
+    env = gym.make('Moving-v0')
+    # env = gym.make(
+    #     'Moving-v0', 
+    #     seed=0, 
+    #     max_turn=1,
+    #     max_acceleration=1.0, 
+    #     delta_t=0.001, 
+    #     max_step=500, 
+    #     penalty=0.01
+    # )
+
+    # Check the space
+    print(f'action_space : {env.action_space}')
+    print(env.action_space.spaces[0])
+    print(env.action_space.spaces[1].shape)
+    print(f'discrete_action_space: {env.action_space.spaces[0].n}, \
+        continuous_action_space: {env.action_space.spaces[1].shape[0]}')
+    print(f'observation_space : {env.observation_space}')
+    print(f'observation_space.spaces.shape : {env.observation_space.shape}')
+
+    # Check the value, rendering
+    obs = env.reset()
+
+    for i in range(10):
+        action = env.action_space.sample()
+        obs, reward, done, info = env.step(action)
+        env.render()
+
+    print(f'action: {action}')
+    print(f'obs: {obs}')
+    print(f'reward: {reward}')
+    print(f'done: {done}')
+    print(f'info: {info}')
+
+    obs = np.array(obs)
+    flat_obs = obs.reshape(-1)
+
+    print('original : ', np.shape(obs))
+    print('flat_obs : ', np.shape(flat_obs))
 
 
 #Todo
-def goal_env_test():
-    env = gym.make('Platform-v0')
-
-    print('action_space : ', env.action_space)
-    print(env.action_space.spaces[0].n)
-    print(env.action_space.spaces[1][0])
-    print('observation_space : ', env.observation_space)
-    print('observation_space[0] : ', env.observation_space[0])
-    print('observation_space[1] : ', env.observation_space[1])
-    print('observation_space[0].shape : ', env.observation_space[0].shape)
-    print('observation_space[1].shape : ', env.observation_space[1].shape)
-
-    obs = env.reset()
-
-    obs = np.array(obs)
-    flat_obs = obs.reshape(-1)
-
-    print('original : ', np.shape(obs))
-    print('flat_obs : ', np.shape(flat_obs))
-
-
-def platform_env_test():
-    env = gym.make('Platform-v0')
-
-    print('action_space : ', env.action_space)
-    print(env.action_space.spaces[0].n)
-    print(env.action_space.spaces[1][0])
-    print('observation_space : ', env.observation_space)
-    print('observation_space[0] : ', env.observation_space[0])
-    print('observation_space[1] : ', env.observation_space[1])
-    print('observation_space[0].shape : ', env.observation_space[0].shape)
-    print('observation_space[1].shape : ', env.observation_space[1].shape)
-
-    obs = env.reset()
-
-    obs = np.array(obs)
-    flat_obs = obs.reshape(-1)
-
-    print('original : ', np.shape(obs))
-    print('flat_obs : ', np.shape(flat_obs))
-
-
-def platform_env_test():
-    env = gym.make('Platform-v0')
-
-    print('action_space : ', env.action_space)
-    print(env.action_space.spaces[0].n)
-    print(env.action_space.spaces[1][0])
-    print('observation_space : ', env.observation_space)
-    print('observation_space[0] : ', env.observation_space[0])
-    print('observation_space[1] : ', env.observation_space[1])
-    print('observation_space[0].shape : ', env.observation_space[0].shape)
-    print('observation_space[1].shape : ', env.observation_space[1].shape)
-
-    obs = env.reset()
-
-    obs = np.array(obs)
-    flat_obs = obs.reshape(-1)
-
-    print('original : ', np.shape(obs))
-    print('flat_obs : ', np.shape(flat_obs))
-
-
-def catch_point_env_test():
-    env = gym.make('Platform-v0')
-
-    print('action_space : ', env.action_space)
-    print(env.action_space.spaces[0].n)
-    print(env.action_space.spaces[1][0])
-    print('observation_space : ', env.observation_space)
-    print('observation_space[0] : ', env.observation_space[0])
-    print('observation_space[1] : ', env.observation_space[1])
-    print('observation_space[0].shape : ', env.observation_space[0].shape)
-    print('observation_space[1].shape : ', env.observation_space[1].shape)
-
-    obs = env.reset()
-
-    obs = np.array(obs)
-    flat_obs = obs.reshape(-1)
-
-    print('original : ', np.shape(obs))
-    print('flat_obs : ', np.shape(flat_obs))
-
-
 def hard_goal_env_test():
     env = gym.make('Platform-v0')
 
-    print('action_space : ', env.action_space)
-    print(env.action_space.spaces[0].n)
-    print(env.action_space.spaces[1][0])
-    print('observation_space : ', env.observation_space)
-    print('observation_space[0] : ', env.observation_space[0])
-    print('observation_space[1] : ', env.observation_space[1])
-    print('observation_space[0].shape : ', env.observation_space[0].shape)
-    print('observation_space[1].shape : ', env.observation_space[1].shape)
+    # Check the space
+    print(f'action_space : {env.action_space}')
+    print(env.action_space.spaces[0])
+    print(env.action_space.spaces[1].spaces[0], env.action_space.spaces[1].spaces[1], env.action_space.spaces[1].spaces[2])
+    print(f'observation_space : {env.observation_space}')
+    print(f'observation_space.spaces[0] : {env.observation_space.spaces[0]}')
+    print(f'observation_space.spaces[1] : {env.observation_space.spaces[1]}')
+    print(f'observation_space.spaces[0].shape : {env.observation_space.spaces[0].shape}')
+    print(f'observation_space.spaces[1].shape : {env.observation_space.spaces[1].shape}')
 
+    # Check the value, rendering
     obs = env.reset()
+
+    for i in range(10):
+        action = env.action_space.sample()
+        obs, reward, done, info = env.step(action)
+        env.render()
+
+    print(f'action: {action}')
+    print(f'obs: {obs}')
+    print(f'reward: {reward}')
+    print(f'done: {done}')
+    print(f'info: {info}')
 
     obs = np.array(obs)
     flat_obs = obs.reshape(-1)
@@ -109,19 +155,33 @@ def hard_goal_env_test():
     print('flat_obs : ', np.shape(flat_obs))
 
 
+#Todo
 def hard_move_env_test():
     env = gym.make('Platform-v0')
 
-    print('action_space : ', env.action_space)
-    print(env.action_space.spaces[0].n)
-    print(env.action_space.spaces[1][0])
-    print('observation_space : ', env.observation_space)
-    print('observation_space[0] : ', env.observation_space[0])
-    print('observation_space[1] : ', env.observation_space[1])
-    print('observation_space[0].shape : ', env.observation_space[0].shape)
-    print('observation_space[1].shape : ', env.observation_space[1].shape)
+    # Check the space
+    print(f'action_space : {env.action_space}')
+    print(env.action_space.spaces[0])
+    print(env.action_space.spaces[1].spaces[0], env.action_space.spaces[1].spaces[1], env.action_space.spaces[1].spaces[2])
+    print(f'observation_space : {env.observation_space}')
+    print(f'observation_space.spaces[0] : {env.observation_space.spaces[0]}')
+    print(f'observation_space.spaces[1] : {env.observation_space.spaces[1]}')
+    print(f'observation_space.spaces[0].shape : {env.observation_space.spaces[0].shape}')
+    print(f'observation_space.spaces[1].shape : {env.observation_space.spaces[1].shape}')
 
+    # Check the value, rendering
     obs = env.reset()
+
+    for i in range(10):
+        action = env.action_space.sample()
+        obs, reward, done, info = env.step(action)
+        env.render()
+
+    print(f'action: {action}')
+    print(f'obs: {obs}')
+    print(f'reward: {reward}')
+    print(f'done: {done}')
+    print(f'info: {info}')
 
     obs = np.array(obs)
     flat_obs = obs.reshape(-1)
@@ -130,19 +190,33 @@ def hard_move_env_test():
     print('flat_obs : ', np.shape(flat_obs))
 
 
+#Todo
 def domestic_env_test():
     env = gym.make('Platform-v0')
 
-    print('action_space : ', env.action_space)
-    print(env.action_space.spaces[0].n)
-    print(env.action_space.spaces[1][0])
-    print('observation_space : ', env.observation_space)
-    print('observation_space[0] : ', env.observation_space[0])
-    print('observation_space[1] : ', env.observation_space[1])
-    print('observation_space[0].shape : ', env.observation_space[0].shape)
-    print('observation_space[1].shape : ', env.observation_space[1].shape)
+    # Check the space
+    print(f'action_space : {env.action_space}')
+    print(env.action_space.spaces[0])
+    print(env.action_space.spaces[1].spaces[0], env.action_space.spaces[1].spaces[1], env.action_space.spaces[1].spaces[2])
+    print(f'observation_space : {env.observation_space}')
+    print(f'observation_space.spaces[0] : {env.observation_space.spaces[0]}')
+    print(f'observation_space.spaces[1] : {env.observation_space.spaces[1]}')
+    print(f'observation_space.spaces[0].shape : {env.observation_space.spaces[0].shape}')
+    print(f'observation_space.spaces[1].shape : {env.observation_space.spaces[1].shape}')
 
+    # Check the value, rendering
     obs = env.reset()
+
+    for i in range(10):
+        action = env.action_space.sample()
+        obs, reward, done, info = env.step(action)
+        env.render()
+
+    print(f'action: {action}')
+    print(f'obs: {obs}')
+    print(f'reward: {reward}')
+    print(f'done: {done}')
+    print(f'info: {info}')
 
     obs = np.array(obs)
     flat_obs = obs.reshape(-1)
@@ -158,17 +232,17 @@ if __name__ == "__main__":
     4: Hard Goal, 5: Hard move, 6: Domestic
     """
 
-    env_switch = 1
+    env_switch = 3
 
     if env_switch == 1:
         goal_env_test()
     elif env_switch == 2:
         platform_env_test()
     elif env_switch == 3:
-        catch_point_env_test()
-    elif env_switch == 4:
+        move_env_test()
+    elif env_switch == 4: # Todo
         hard_goal_env_test()
-    elif env_switch == 5:
+    elif env_switch == 5: # Todo
         hard_move_env_test()
     elif env_switch == 6:
         domestic_env_test()

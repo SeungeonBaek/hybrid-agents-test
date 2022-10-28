@@ -1,6 +1,8 @@
+from typing import Dict, Union, Any, Tuple
+from numpy.typing import NDArray
+
 import tensorflow as tf
 import numpy as np
-import copy
 import tensorflow_probability as tfp
 
 from tensorflow.keras.optimizers import Adam
@@ -14,44 +16,51 @@ from utils.replay_buffer import ExperienceMemory
 
 
 class ContinuousActor(Model):
-    def __init__(self, cont_action_space):
+    def __init__(self,
+                 continuous_act_space: int):
         super(ContinuousActor,self).__init__()
-        self.initializer = initializers.he_normal()
-        self.regularizer = regularizers.l2(l=0.005)
-        self.l1 = Dense(256, activation = 'relu', kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
-        self.l2 = Dense(128, activation = 'relu', kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
-        self.l3 = Dense(64, activation = 'relu', kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
-        self.l4 = Dense(32, activation = 'relu', kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
-        self.mu = Dense(cont_action_space, activation='tanh')
+        self.continuous_act_space = continuous_act_space
 
-    def call(self, state):
+        self.initializer = initializers.he_normal()
+        self.regularizer = regularizers.l2(l=0.0005)
+
+        self.l1 = Dense(256, activation = 'relu', kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
+        self.l1_ln = LayerNormalization(axis=-1)
+        self.l2 = Dense(256, activation = 'relu', kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
+        self.l2_ln = LayerNormalization(axis=-1)
+        self.mu = Dense(self.continuous_act_space, activation='tanh')
+
+    def call(self, state: Union[NDArray, tf.Tensor])-> tf.Tensor:
         l1 = self.l1(state)
-        l2 = self.l2(l1)
-        l3 = self.l3(l2)
-        l4 = self.l4(l3)
-        mu = self.mu(l4)
+        l1_ln = self.l1_ln(l1)
+        l2 = self.l2(l1_ln)
+        l2_ln = self.l2_ln(l2)
+        mu = self.mu(l2_ln)
 
         return mu
 
 
 class DiscreteActor(Model):
-    def __init__(self, disc_action_space):
+    def __init__(self,
+                 discrete_act_spac:int):
         super(DiscreteActor,self).__init__()
-        self.initializer = initializers.he_normal()
-        self.regularizer = regularizers.l2(l=0.005)
+        self.discrete_act_spac = discrete_act_spac
+
+        self.initializer = initializers.glorot_normal()
+        self.regularizer = regularizers.l2(l=0.0005)
 
         self.l1 = Dense(256, activation = 'relu' , kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
-        self.l2 = Dense(128, activation = 'relu' , kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
-        self.l3 = Dense(64, activation = 'relu' , kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
-        self.l4 = Dense(32, activation = 'relu' , kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
-        self.value = tf.keras.layers.Dense(disc_action_space, activation = None)
+        self.l1_ln = LayerNormalization(axis=-1)
+        self.l2 = Dense(256, activation = 'relu' , kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
+        self.l2_ln = LayerNormalization(axis=-1)
+        self.value = tf.keras.layers.Dense(self.discrete_act_spac, activation = None)
 
-    def call(self, state_cont_action):
-        l1 = self.l1(state_cont_action) # 확인
+    def call(self, state: Union[NDArray, tf.Tensor])-> tf.Tensor:
+        l1 = self.l1(state)
+        l1_ln = self.l1_ln(l1)
         l2 = self.l2(l1)
-        l3 = self.l3(l2)
-        l4 = self.l4(l3)
-        value = self.value(l4)
+        l2_ln = self.l2_ln(l2)
+        value = self.value(l2_ln)
 
         return value
 
@@ -62,11 +71,14 @@ class Agent:
 
     action_config: disc_act_spaces, cont_act_spaces, disc_act_max, disc_act_min, cont_act_max, cont_act_min
 
-    agent_config: agent_name, gamma, epsilon_init, epsilon_final, epsilon_reduce_rate, tau, batch_size,\
+    agent_config: agent_name, gamma, epsilon_init, epsilon_final, epsilon_decaying_rate, tau, batch_size,\
                   warm_up, gaussian_std, noise_clip, noise_reduce_rate, lr_disc_actor, lr_cont_actor,\
                   use_PER, buffer_size, reward_normalize
     """
-    def __init__(self, obs_space, action_config, agent_config):
+    def __init__(self,
+                 agent_config: Dict,
+                 obs_space: int,
+                 action_config: Dict):
         self.agent_config = agent_config
         self.action_config = action_config
         self.name = self.agent_config['agent_name']
@@ -86,7 +98,8 @@ class Agent:
         print(f'act_spaces: {self.disc_act_spaces}, cont_act_spaces: {self.cont_act_spaces}')
 
         self.gamma = self.agent_config['gamma']
-        self.tau = self.agent_config['tau']
+        self.discrete_tau = self.agent_config['discrete_tau']
+        self.continuous_tau = self.agent_config['continuous_tau']
 
         if self.agent_config['use_PER']:
             self.replay_buffer = PrioritizedMemory(self.agent_config['buffer_size'])
@@ -94,14 +107,13 @@ class Agent:
             self.replay_buffer = ExperienceMemory(self.agent_config['buffer_size'])
         self.batch_size = self.agent_config['batch_size']
 
-        self.epsilon_init = self.agent_config['epsilon_init']
-        self.epsilon_final = self.agent_config['epsilon_final']
-        self.epsilon_reduce_rate = self.agent_config['epsilon_reduce_rate']
-        self.epsilon = copy.deepcopy(self.epsilon_init)
+        self.epsilon = self.agent_config['epsilon']
+        self.epsilon_decaying_rate = self.agent_config['epsilon_decaying_rate']
+        self.min_epsilon = self.agent_config['min_epsilon']
 
         self.std = self.agent_config['gaussian_std']
         self.noise_clip = self.agent_config['noise_clip']
-        self.reduce_rate = self.agent_config['noise_reduce_rate']
+        self.noise_reduce_rate = self.agent_config['noise_reduce_rate']
         self.gradient_steps = 0
         self.critic_steps = 0
         self.warm_up = self.agent_config['warm_up']
@@ -109,6 +121,7 @@ class Agent:
         self.lr_disc_actor = self.agent_config['lr_disc_actor']
         self.lr_cont_actor = self.agent_config['lr_cont_actor']
 
+        # network config
         self.disc_actor_main   = DiscreteActor(self.disc_act_space)
         self.disc_actor_target = DiscreteActor(self.disc_act_space)
         self.disc_actor_target.set_weights(self.disc_actor_main.get_weights())
@@ -116,12 +129,18 @@ class Agent:
         self.disc_actor_main.compile(optimizer=self.disc_actor_opt_main)
         
         self.cont_actor_main   = ContinuousActor(self.cont_act_space)
-        self.cont_actor_target = ContinuousActor(self.cont_act_space)
-        self.cont_actor_target.set_weights(self.cont_actor_main.get_weights())
         self.cont_actor_opt_main = Adam(self.lr_cont_actor)
         self.cont_actor_main.compile(optimizer=self.cont_actor_opt_main)
 
-    def action(self, obs):
+        # extension config
+        self.extension_config = self.agent_config['extension']
+        self.extension_name = self.extension_config['name']
+
+        if self.extension_config['use_Twin_Delay']:
+            self.cont_actor_target = ContinuousActor(self.cont_act_space)
+            self.cont_actor_target.set_weights(self.cont_actor_main.get_weights())
+
+    def action(self, obs)-> Tuple[NDArray, NDArray, NDArray]:
         obs = tf.convert_to_tensor([obs], dtype=tf.float32)
         # print('in action, obs: ', np.shape(np.array(obs)), obs)
         cont_actions = self.cont_actor_main(obs)
@@ -133,7 +152,7 @@ class Agent:
             disc_action = np.random.choice(self.disc_act_space)
 
         else:
-            q_value = self.disc_actor_main(tf.concat([obs,cont_actions], 1))
+            q_value = self.disc_actor_main(obs)
             disc_action = np.argmax(q_value.numpy())
 
         cont_actions = cont_actions.numpy()[0]
@@ -146,10 +165,11 @@ class Agent:
             dist = tfp.distributions.Normal(loc=tf.zeros(shape=(self.cont_act_spaces[disc_action]), dtype=tf.float32), scale=std)
             noises = tf.squeeze(dist.sample())
             noises = noises.numpy()
-            self.std = self.std * self.reduce_rate
-            self.epsilon = self.epsilon * self.epsilon_reduce_rate
-            if self.epsilon < self.epsilon_final:
-                self.epsilon = self.epsilon_final
+            self.std = self.std * self.noise_reduce_rate
+
+            self.epsilon = self.epsilon * self.epsilon_decaying_rate
+            if self.epsilon < self.min_epsilon:
+                self.epsilon = self.min_epsilon
             cont_actions[offset_start:offset_end] += np.clip(noises, - self.noise_clip, self.noise_clip)
         else:
             pass
@@ -158,22 +178,27 @@ class Agent:
 
         return disc_action, chosen_cont_action, cont_actions
 
-    def update_target(self):
-        disc_actor_weights = []
-        disc_actor_targets = self.disc_actor_target.weights
+    def update_target(self)-> None:
+        if self.discrete_tau == None:
+            disc_actor_weights = self.disc_actor_main.get_weights()
+            self.disc_actor_target.set_weights(disc_actor_weights)
+        else:
+            disc_actor_weights = []
+            disc_actor_targets = self.disc_actor_target.weights
+            
+            for idx, weight in enumerate(self.disc_actor_main.weights):
+                disc_actor_weights.append(weight * self.discrete_tau + disc_actor_targets[idx] * (1 - self.discrete_tau))
+            self.disc_actor_target.set_weights(disc_actor_weights)
         
-        for idx, weight in enumerate(self.disc_actor_main.weights):
-            disc_actor_weights.append(weight * self.tau + disc_actor_targets[idx] * (1 - self.tau))
-        self.disc_actor_target.set_weights(disc_actor_weights)
-        
-        cont_actor_weithgs = []
-        cont_actor_targets = self.cont_actor_target.weights
-        
-        for idx, weight in enumerate(self.cont_actor_main.weights):
-            cont_actor_weithgs.append(weight * self.tau + cont_actor_targets[idx] * (1 - self.tau))
-        self.cont_actor_target.set_weights(cont_actor_weithgs)
+        if self.extension_config['use_Twin_Delay']:
+            cont_actor_weithgs = []
+            cont_actor_targets = self.cont_actor_target.weights
+            
+            for idx, weight in enumerate(self.cont_actor_main.weights):
+                cont_actor_weithgs.append(weight * self.continuous_tau + cont_actor_targets[idx] * (1 - self.continuous_tau))
+            self.cont_actor_target.set_weights(cont_actor_weithgs)
 
-    def update(self):
+    def update(self)-> None:
         if self.replay_buffer._len() < self.batch_size:
             return False, 0.0, 0.0, 0.0, 0.0
 
@@ -287,7 +312,7 @@ class Agent:
 
         return updated, cont_actor_loss_val, disc_actor_loss_val, target_q_val, current_q_val
 
-    def save_xp(self, state, next_state, reward, action, done):
+    def save_xp(self, state: NDArray, next_state: NDArray, reward: float, action: NDArray, done: bool)-> None:
         # Store transition in the replay buffer.
         if self.agent_config['use_PER']:
             state_tf = tf.convert_to_tensor([state], dtype = tf.float32)
@@ -339,7 +364,7 @@ class Agent:
             
             self.replay_buffer.add((state, next_state, reward, np.concatenate(([disc_action],cont_action)).ravel(), done))
 
-    def load_models(self, path):
+    def load_models(self, path: str):
         print('Load Model Path : ', path)
         self.actor_main.load_weights(path, "_actor_main")
         self.actor_target.load_weights(path, "_actor_target")
@@ -348,7 +373,7 @@ class Agent:
         self.critic_target_1.load_weights(path, "_critic_target_1")
         self.critic_target_2.load_weights(path, "_critic_target_2")
 
-    def save_models(self, path, score):
+    def save_models(self, path: str, score: float):
         save_path = str(path) + "score_" + str(score) + "_model"
         print('Save Model Path : ', save_path)
         self.actor_main.save_weights(save_path, "_actor")
