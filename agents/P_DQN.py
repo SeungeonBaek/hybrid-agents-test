@@ -10,6 +10,7 @@ from tensorflow.keras import Model
 from tensorflow.keras import initializers
 from tensorflow.keras import regularizers
 from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import LayerNormalization
 
 from utils.prioritized_memory_numpy import PrioritizedMemory
 from utils.replay_buffer import ExperienceMemory
@@ -107,13 +108,6 @@ class Agent:
             self.replay_buffer = ExperienceMemory(self.agent_config['buffer_size'])
         self.batch_size = self.agent_config['batch_size']
 
-        self.epsilon = self.agent_config['epsilon']
-        self.epsilon_decaying_rate = self.agent_config['epsilon_decaying_rate']
-        self.min_epsilon = self.agent_config['min_epsilon']
-
-        self.std = self.agent_config['gaussian_std']
-        self.noise_clip = self.agent_config['noise_clip']
-        self.noise_reduce_rate = self.agent_config['noise_reduce_rate']
         self.gradient_steps = 0
         self.critic_steps = 0
         self.warm_up = self.agent_config['warm_up']
@@ -135,6 +129,14 @@ class Agent:
         # extension config
         self.extension_config = self.agent_config['extension']
         self.extension_name = self.extension_config['name']
+
+        self.epsilon = self.extension_config['epsilon']
+        self.epsilon_decaying_rate = self.extension_config['epsilon_decaying_rate']
+        self.min_epsilon = self.extension_config['min_epsilon']
+
+        self.std = self.extension_config['gaussian_std']
+        self.noise_clip = self.extension_config['noise_clip']
+        self.noise_reduce_rate = self.extension_config['noise_reduce_rate']
 
         if self.extension_config['use_Twin_Delay']:
             self.cont_actor_target = ContinuousActor(self.cont_act_space)

@@ -10,11 +10,23 @@ def goal_env_test():
     env = gym.make('Goal-v0')
 
     # Check the space
+    print(f"########## action ##########")
     print(f'action_space : {env.action_space}')
     print(env.action_space.spaces[0])
     print(env.action_space.spaces[1].spaces[0], env.action_space.spaces[1].spaces[1], env.action_space.spaces[1].spaces[2])
     print(f'discrete_action_space: {env.action_space.spaces[0].n}, \
         continuous_action_space: {env.action_space.spaces[1].spaces[0].shape[0] + env.action_space.spaces[1].spaces[1].shape[0] + env.action_space.spaces[1].spaces[2].shape[0]}')
+
+    action_config = {'disc_act_spaces': env.action_space.spaces[0].n, \
+                'cont_act_spaces': np.array([env.action_space.spaces[1][i].shape[0] for i in range(env.action_space.spaces[0].n)]), \
+                'disc_act_max'   : 0, \
+                'disc_act_min'   : 0, \
+                'cont_act_max'   : np.concatenate([env.action_space.spaces[1][i].high for i in range(env.action_space.spaces[0].n)]).ravel(), \
+                'cont_act_min'   : np.concatenate([env.action_space.spaces[1][i].low for i in range(env.action_space.spaces[0].n)]).ravel()}
+
+    print(f"action_config: {action_config}")
+
+    print(f"\n########## observation ##########")
     print(f'observation_space : {env.observation_space}')
     print(f'observation_space.spaces[0] : {env.observation_space.spaces[0]}')
     print(f'observation_space.spaces[1] : {env.observation_space.spaces[1]}')
@@ -46,11 +58,24 @@ def platform_env_test():
     env = gym.make('Platform-v0')
 
     # Check the space
+    print(f"########## action ##########")
     print(f'action_space : {env.action_space}')
     print(env.action_space.spaces[0])
     print(env.action_space.spaces[1].spaces[0], env.action_space.spaces[1].spaces[1], env.action_space.spaces[1].spaces[2])
     print(f'discrete_action_space: {env.action_space.spaces[0].n}, \
         continuous_action_space: {env.action_space.spaces[1].spaces[0].shape[0] + env.action_space.spaces[1].spaces[1].shape[0] + env.action_space.spaces[1].spaces[2].shape[0]}')
+
+    action_config = {'disc_act_spaces': env.action_space.spaces[0].n, \
+                'cont_act_spaces': np.array([env.action_space.spaces[1][i].shape[0] for i in range(env.action_space.spaces[0].n)]), \
+                'disc_act_max'   : 0, \
+                'disc_act_min'   : 0, \
+                'cont_act_max'   : np.concatenate([env.action_space.spaces[1][i].high for i in range(env.action_space.spaces[0].n)]).ravel(), \
+                'cont_act_min'   : np.concatenate([env.action_space.spaces[1][i].low for i in range(env.action_space.spaces[0].n)]).ravel()}
+
+    print(f"action_config: {action_config}")
+
+    print(f"\n########## observation ##########")
+
     print(f'observation_space : {env.observation_space}')
     print(f'observation_space.spaces[0] : {env.observation_space.spaces[0]}')
     print(f'observation_space.spaces[1] : {env.observation_space.spaces[1]}')
@@ -91,11 +116,23 @@ def move_env_test():
     # )
 
     # Check the space
+    print(f"########## action ##########")
     print(f'action_space : {env.action_space}')
     print(env.action_space.spaces[0])
     print(env.action_space.spaces[1].shape)
     print(f'discrete_action_space: {env.action_space.spaces[0].n}, \
         continuous_action_space: {env.action_space.spaces[1].shape[0]}')
+
+    action_config = {'disc_act_spaces': env.action_space.spaces[0].n, \
+                'cont_act_spaces': np.array([1, 1], dtype=np.float32), \
+                'disc_act_max'   : 0, \
+                'disc_act_min'   : 0, \
+                'cont_act_max'   : np.concatenate([env.action_space.spaces[1].high]).ravel(), \
+                'cont_act_min'   : np.concatenate([env.action_space.spaces[1].low]).ravel()}
+
+    print(f"action_config: {action_config}")
+
+    print(f"\n########## observation ##########")
     print(f'observation_space : {env.observation_space}')
     print(f'observation_space.spaces.shape : {env.observation_space.shape}')
 
@@ -232,7 +269,7 @@ if __name__ == "__main__":
     4: Hard Goal, 5: Hard move, 6: Domestic
     """
 
-    env_switch = 3
+    env_switch = 2
 
     if env_switch == 1:
         goal_env_test()

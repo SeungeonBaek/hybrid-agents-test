@@ -13,10 +13,17 @@ from utils.rl_logger import RLLogger
 from utils.rl_loader import RLLoader
 
 
-# Todo
+def pad_action(act, act_param):
+    params = [np.zeros((1,), dtype=np.float32), np.zeros((1,), dtype=np.float32), np.zeros((1,), dtype=np.float32)]
+    # print('act :', act)
+    # print('act_param :', act_param)
+    params[act][:] = act_param
+    return (act, params)
+
+
 def main(env_config: Dict, agent_config: Dict, rl_confing: Dict, data_save_path: str, rl_logger: RLLogger, rl_loader: RLLoader):
     # Env
-    env, env_obs_space, env_act_space = rl_loader.env_loader()
+    env, env_obs_space, env_act_space, action_config = rl_loader.env_loader()
     print(f"env_name : {env_config['env_name']}, obs_space : {env_obs_space}, act_space : {env_act_space}")
 
     if len(env_obs_space) > 1:
@@ -25,11 +32,9 @@ def main(env_config: Dict, agent_config: Dict, rl_confing: Dict, data_save_path:
     else:
         obs_space = env_obs_space[0]
 
-    act_space = env_act_space[0]
-
     # Agent
     RLAgent = rl_loader.agent_loader()
-    Agent = RLAgent(agent_config, obs_space, act_space)
+    Agent = RLAgent(agent_config, obs_space, action_config)
     print(f"agent_name: {agent_config['agent_name']}")
 
     # csv logging
@@ -60,12 +65,18 @@ def main(env_config: Dict, agent_config: Dict, rl_confing: Dict, data_save_path:
                 env.render()
             episode_step += 1
 
-            if agent_config['agent_name'] == 'PPO':
-                action, log_policy = Agent.action(obs)
+            if agent_config['agent_name'] == 'HPPO':
+                act, act_param, all_action_parameters, log_policy = Agent.action(obs)
             else:
-                action = Agent.action(obs)
+                act, act_param, all_action_parameters = Agent.action(obs)
             
-            obs, reward, done, _ = env.step(action)
+            action = pad_action(act, act_param)
+
+            if env_config['env_name'] == 'Goal' or env_config['env_name'] == 'Platform':
+                (obs, _), reward, done, _ = env.step(action)
+            elif env_config['env_name'] == 'Move':
+                obs, reward, done, _ = env.step(action)
+
             obs = np.array(obs)
             obs = obs.reshape(-1)
 
@@ -76,14 +87,14 @@ def main(env_config: Dict, agent_config: Dict, rl_confing: Dict, data_save_path:
 
             # Save_xp
             if episode_step > 2:
-                if agent_config['agent_name'] == 'PPO':
+                if agent_config['agent_name'] == 'HPPO':
                     Agent.save_xp(prev_obs, obs, reward, prev_action, prev_log_policy, done)
                 else:
                     Agent.save_xp(prev_obs, obs, reward, prev_action, done)
 
             prev_obs = obs
             prev_action = action
-            if agent_config['agent_name'] == 'PPO':
+            if agent_config['agent_name'] == 'HPPO':
                 prev_log_policy = log_policy
 
             if episode_step >= env_config['max_step']:
@@ -124,7 +135,7 @@ if __name__ == '__main__':
     21: HHQN,    22: 
     """
     
-    env_switch = 3
+    env_switch = 2
     agent_switch = 9
 
     env_config, agent_config = env_agent_config(env_switch, agent_switch)

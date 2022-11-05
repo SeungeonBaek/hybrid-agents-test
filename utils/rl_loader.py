@@ -1,9 +1,9 @@
 import gym
+import numpy as np
 
 """
 
 """
-
 
 class RLLoader():
     def __init__(self, env_config, agent_config):
@@ -12,41 +12,60 @@ class RLLoader():
 
     def env_loader(self):
         if self.env_config['env_name'] == 'Goal':
+            import gym_goal
             env = gym.make('Goal-v0')
-            obs_space = observation_space.spaces[0].shape + 1 #((obs), time)
-            discrete_act_space = env.action_space.spaces[0].n
-            continuous_act_space = env.action_space.spaces[1].spaces[0].shape[0] + env.action_space.spaces[1].spaces[1].shape[0] + env.action_space.spaces[1].spaces[2].shape[0]
+            obs_space = env.observation_space.spaces[0].shape + 1 #((obs), time)
+            act_space = env.action_space
+
+            action_config = {'disc_act_spaces': act_space.spaces[0].n, \
+                            'cont_act_spaces': np.array([act_space.spaces[1][i].shape[0] for i in range(act_space.spaces[0].n)]), \
+                            'disc_act_max'   : 0, \
+                            'disc_act_min'   : 0, \
+                            'cont_act_max'   : np.concatenate([act_space.spaces[1][i].high for i in range(act_space.spaces[0].n)]).ravel(), \
+                            'cont_act_min'   : np.concatenate([act_space.spaces[1][i].low for i in range(act_space.spaces[0].n)]).ravel()}
 
         elif self.env_config['env_name'] == 'Platform':
+            import gym_platform
             env = gym.make('Platform-v0')
-            obs_space = observation_space.spaces[0].shape + 1 #((obs), time)
-            discrete_act_space = env.action_space.spaces[0].n
-            continuous_act_space = env.action_space.spaces[1].spaces[0].shape[0] + env.action_space.spaces[1].spaces[1].shape[0] + env.action_space.spaces[1].spaces[2].shape[0]
+            obs_space = tuple([env.observation_space.spaces[0].shape[0] + 1]) #((obs), time)
+            act_space = env.action_space
+
+            action_config = {'disc_act_spaces': act_space.spaces[0].n, \
+                            'cont_act_spaces': np.array([act_space.spaces[1][i].shape[0] for i in range(act_space.spaces[0].n)]), \
+                            'disc_act_max'   : 0, \
+                            'disc_act_min'   : 0, \
+                            'cont_act_max'   : np.concatenate([act_space.spaces[1][i].high for i in range(act_space.spaces[0].n)]).ravel(), \
+                            'cont_act_min'   : np.concatenate([act_space.spaces[1][i].low for i in range(act_space.spaces[0].n)]).ravel()}
 
         elif self.env_config['env_name'] == 'Move':
+            import gym_hybrid
             env = gym.make('Moving-v0')
             obs_space = env.observation_space.shape
-            discrete_act_space = env.action_space.spaces[0].n
-            continuous_act_space = env.action_space.spaces[1].shape[0]
+            act_space = env.action_space
+
+            action_config = {'disc_act_spaces': env.action_space.spaces[0].n, \
+                        'cont_act_spaces': np.array([1, 1, 0], dtype=np.float32), \
+                        'disc_act_max'   : 0, \
+                        'disc_act_min'   : 0, \
+                        'cont_act_max'   : np.concatenate([env.action_space.spaces[1].high]).ravel(), \
+                        'cont_act_min'   : np.concatenate([env.action_space.spaces[1].low]).ravel()}
 
         elif self.env_config['env_name'] == 'Hard-Move': # Todo
             env = gym.make(self.env_config['env_name'])
             obs_space = env.observation_space.shape
-            discrete_act_space = env.action_space.spaces[0].n
-            continuous_act_space = env.action_space.spaces[1].shape[0]
+            act_space = env.action_space
 
         elif self.env_config['env_name'] == 'Hard-Goal': # Todo
             env = gym.make(self.env_config['env_name'])
             obs_space = env.observation_space.shape
-            discrete_act_space = env.action_space.spaces[0].n
-            continuous_act_space = env.action_space.spaces[1].shape[0]
+            act_space = env.action_space
 
         elif self.env_config['env_name'] == 'domestic': # Todo
             env = gym.make('nota-its-v0')
             obs_space = env.observation_space.shape
-            act_space = env.action_space.shape
+            act_space = env.action_space
 
-        return env, obs_space, discrete_act_space, continuous_act_space
+        return env, obs_space, act_space, action_config
 
     def agent_loader(self):
         if self.agent_config['agent_name'] == 'Q-PAMDP':
