@@ -10,6 +10,8 @@ Target29.py
 Reference_component.py
 Reference_model.py
 
+__pycache__
+
 # directory
 envs/
 src/
