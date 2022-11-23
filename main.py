@@ -55,6 +55,12 @@ def main(env_config: Dict, agent_config: Dict, rl_confing: Dict, data_save_path:
         episode_rewards = []
 
         obs = env.reset()
+
+        if env_config['env_name'] == 'Goal' or env_config['env_name'] == 'Platform':
+            obs = np.append(obs[:-1][0],obs[-1])
+        elif env_config['env_name'] == 'Move':
+            obs = obs
+
         obs = np.array(obs)
         obs = obs.reshape(-1)
 
@@ -73,7 +79,8 @@ def main(env_config: Dict, agent_config: Dict, rl_confing: Dict, data_save_path:
             action = pad_action(act, act_param)
 
             if env_config['env_name'] == 'Goal' or env_config['env_name'] == 'Platform':
-                (obs, _), reward, done, _ = env.step(action)
+                obs, reward, done, _ = env.step(action)
+                obs = np.append(obs[:-1][0],obs[-1])
             elif env_config['env_name'] == 'Move':
                 obs, reward, done, _ = env.step(action)
 

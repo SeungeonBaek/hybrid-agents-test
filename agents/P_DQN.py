@@ -59,7 +59,7 @@ class DiscreteActor(Model):
     def call(self, state: Union[NDArray, tf.Tensor])-> tf.Tensor:
         l1 = self.l1(state)
         l1_ln = self.l1_ln(l1)
-        l2 = self.l2(l1)
+        l2 = self.l2(l1_ln)
         l2_ln = self.l2_ln(l2)
         value = self.value(l2_ln)
 
@@ -108,7 +108,7 @@ class Agent:
             self.replay_buffer = ExperienceMemory(self.agent_config['buffer_size'])
         self.batch_size = self.agent_config['batch_size']
 
-        self.gradient_steps = 0
+        self.update_step = 0
         self.critic_steps = 0
         self.warm_up = self.agent_config['warm_up']
 
@@ -125,6 +125,8 @@ class Agent:
         self.cont_actor_main   = ContinuousActor(self.cont_act_space)
         self.cont_actor_opt_main = Adam(self.lr_cont_actor)
         self.cont_actor_main.compile(optimizer=self.cont_actor_opt_main)
+        self.cont_actor_target = ContinuousActor(self.cont_act_space)
+        self.cont_actor_target.set_weights(self.cont_actor_main.get_weights())
 
         # extension config
         self.extension_config = self.agent_config['extension']
@@ -136,11 +138,13 @@ class Agent:
 
         self.std = self.extension_config['gaussian_std']
         self.noise_clip = self.extension_config['noise_clip']
-        self.noise_reduce_rate = self.extension_config['noise_reduce_rate']
+        self.noise_reduce_rate = self.extension_config['noise_reduction_rate']
 
         if self.extension_config['use_Twin_Delay']:
-            self.cont_actor_target = ContinuousActor(self.cont_act_space)
-            self.cont_actor_target.set_weights(self.cont_actor_main.get_weights())
+            pass
+        
+        if self.extension_config['use_Double_DQN']:
+            pass
 
     def action(self, obs)-> Tuple[NDArray, NDArray, NDArray]:
         obs = tf.convert_to_tensor([obs], dtype=tf.float32)
@@ -154,7 +158,7 @@ class Agent:
             disc_action = np.random.choice(self.disc_act_space)
 
         else:
-            q_value = self.disc_actor_main(obs)
+            q_value = self.disc_actor_main(tf.concat([obs, cont_actions], axis=1))
             disc_action = np.argmax(q_value.numpy())
 
         cont_actions = cont_actions.numpy()[0]
@@ -162,7 +166,7 @@ class Agent:
         offset_end   = offset_start + self.cont_act_spaces[disc_action]
 
         ## gaussian action noise
-        if self.gradient_steps > self.warm_up:
+        if self.update_step > self.warm_up:
             std = tf.convert_to_tensor([self.std]*self.cont_act_spaces[disc_action], dtype=tf.float32)
             dist = tfp.distributions.Normal(loc=tf.zeros(shape=(self.cont_act_spaces[disc_action]), dtype=tf.float32), scale=std)
             noises = tf.squeeze(dist.sample())
@@ -204,10 +208,10 @@ class Agent:
         if self.replay_buffer._len() < self.batch_size:
             return False, 0.0, 0.0, 0.0, 0.0
 
-        self.gradient_steps += 1
+        self.update_step += 1
 
         updated = True
-        self.gradient_steps += 1
+        self.update_step += 1
         self.critic_steps += 1
 
         actor_loss_val, criitic_loss1_val, ciritic_loss2_val = 0.0, 0.0, 0.0
@@ -361,10 +365,10 @@ class Agent:
             # print(f'action: {action}')
             # print(f'disc_action: {disc_action}')
             # print(f'cont_action: {cont_action}')
-            # print(f'concat_action: {np.concatenate(([disc_action],cont_action)).ravel()}')
+            # print(f'concat_action: {np.concatenate(([disc_action],np.squeeze(cont_action))).ravel()}')
             # print(f'done: {done}')
             
-            self.replay_buffer.add((state, next_state, reward, np.concatenate(([disc_action],cont_action)).ravel(), done))
+            self.replay_buffer.add((state, next_state, reward, np.concatenate(([disc_action],np.squeeze(cont_action))).ravel(), done))
 
     def load_models(self, path: str):
         print('Load Model Path : ', path)

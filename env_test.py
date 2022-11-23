@@ -66,11 +66,11 @@ def platform_env_test():
         continuous_action_space: {env.action_space.spaces[1].spaces[0].shape[0] + env.action_space.spaces[1].spaces[1].shape[0] + env.action_space.spaces[1].spaces[2].shape[0]}')
 
     action_config = {'disc_act_spaces': env.action_space.spaces[0].n, \
-                'cont_act_spaces': np.array([env.action_space.spaces[1][i].shape[0] for i in range(env.action_space.spaces[0].n)]), \
+                'cont_act_spaces': np.array([env.action_space.spaces[1].spaces[i].shape[0] for i in range(env.action_space.spaces[0].n)]), \
                 'disc_act_max'   : 0, \
                 'disc_act_min'   : 0, \
-                'cont_act_max'   : np.concatenate([env.action_space.spaces[1][i].high for i in range(env.action_space.spaces[0].n)]).ravel(), \
-                'cont_act_min'   : np.concatenate([env.action_space.spaces[1][i].low for i in range(env.action_space.spaces[0].n)]).ravel()}
+                'cont_act_max'   : np.concatenate([env.action_space.spaces[1].spaces[i].high for i in range(env.action_space.spaces[0].n)]).ravel(), \
+                'cont_act_min'   : np.concatenate([env.action_space.spaces[1].spaces[i].low for i in range(env.action_space.spaces[0].n)]).ravel()}
 
     print(f"action_config: {action_config}")
 

@@ -31,11 +31,11 @@ class RLLoader():
             act_space = env.action_space
 
             action_config = {'disc_act_spaces': act_space.spaces[0].n, \
-                            'cont_act_spaces': np.array([act_space.spaces[1][i].shape[0] for i in range(act_space.spaces[0].n)]), \
+                            'cont_act_spaces': np.array([act_space.spaces[1].spaces[i].shape[0] for i in range(act_space.spaces[0].n)]), \
                             'disc_act_max'   : 0, \
                             'disc_act_min'   : 0, \
-                            'cont_act_max'   : np.concatenate([act_space.spaces[1][i].high for i in range(act_space.spaces[0].n)]).ravel(), \
-                            'cont_act_min'   : np.concatenate([act_space.spaces[1][i].low for i in range(act_space.spaces[0].n)]).ravel()}
+                            'cont_act_max'   : np.concatenate([act_space.spaces[1].spaces[i].high for i in range(act_space.spaces[0].n)]).ravel(), \
+                            'cont_act_min'   : np.concatenate([act_space.spaces[1].spaces[i].low for i in range(act_space.spaces[0].n)]).ravel()}
 
         elif self.env_config['env_name'] == 'Move':
             import gym_hybrid
