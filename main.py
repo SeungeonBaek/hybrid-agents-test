@@ -105,7 +105,7 @@ def main(env_config: Dict,
 
             if env_name == 'Goal' or env_name == 'Platform':
                 obs, reward, done, _ = env.step(action)
-                reward = reward * 100
+                reward = reward * 10
                 obs = np.append(obs[:-1][0],obs[-1])
             elif env_name == 'Move':
                 obs, reward, done, _ = env.step(action)

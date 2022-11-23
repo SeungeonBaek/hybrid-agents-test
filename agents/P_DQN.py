@@ -21,7 +21,7 @@ from agents.RND_model import RND_target, RND_predict
 
 class ContinuousActor(Model):
     def __init__(self,
-                 continuous_act_space: int):
+                 continuous_act_space: int)-> None:
         super(ContinuousActor,self).__init__()
         self.continuous_act_space = continuous_act_space
 
@@ -46,7 +46,7 @@ class ContinuousActor(Model):
 
 class DiscreteActor(Model):
     def __init__(self,
-                 discrete_act_spac:int):
+                 discrete_act_spac:int)-> None:
         super(DiscreteActor,self).__init__()
         self.discrete_act_spac = discrete_act_spac
 
@@ -111,8 +111,11 @@ class Agent:
             self.replay_buffer = ExperienceMemory(self.agent_config['buffer_size'])
         self.batch_size = self.agent_config['batch_size']
 
+        self.update_call_step = 0
         self.update_step = 0
-        self.critic_steps = 0
+        self.update_freq = self.agent_config['update_freq']
+        self.target_update_freq = self.agent_config['target_update_freq']
+
         self.warm_up = self.agent_config['warm_up']
 
         self.lr_disc_actor = self.agent_config['lr_disc_actor']
@@ -126,27 +129,27 @@ class Agent:
         self.disc_actor_main.compile(optimizer=self.disc_actor_opt_main)
         
         self.cont_actor_main   = ContinuousActor(self.cont_act_space)
-        self.cont_actor_opt_main = Adam(self.lr_cont_actor)
-        self.cont_actor_main.compile(optimizer=self.cont_actor_opt_main)
         self.cont_actor_target = ContinuousActor(self.cont_act_space)
         self.cont_actor_target.set_weights(self.cont_actor_main.get_weights())
+        self.cont_actor_opt_main = Adam(self.lr_cont_actor)
+        self.cont_actor_main.compile(optimizer=self.cont_actor_opt_main)
 
         # extension config
         self.extension_config = self.agent_config['extension']
         self.extension_name = self.extension_config['name']
 
-        self.epsilon = self.extension_config['epsilon']
-        self.epsilon_decaying_rate = self.extension_config['epsilon_decaying_rate']
-        self.min_epsilon = self.extension_config['min_epsilon']
-
         self.std = self.extension_config['gaussian_std']
         self.noise_clip = self.extension_config['noise_clip']
         self.noise_reduce_rate = self.extension_config['noise_reduction_rate']
 
+        self.epsilon = self.extension_config['epsilon']
+        self.epsilon_decaying_rate = self.extension_config['epsilon_decaying_rate']
+        self.min_epsilon = self.extension_config['min_epsilon']
+
         if self.extension_config['use_Twin_Delay']:
             pass
         
-        if self.extension_config['use_Double_DQN']:
+        if self.extension_config['use_DDQN']:
             pass
 
         if self.extension_name == 'ICM':
@@ -183,6 +186,8 @@ class Agent:
             else:
                 q_value = self.disc_actor_main(tf.concat([obs, cont_actions], axis=1))
                 disc_action = np.argmax(q_value.numpy())
+        else:
+            disc_action = np.random.choice(self.disc_act_space)
 
         cont_actions = cont_actions.numpy()[0]
         offset_start = np.array([self.cont_act_spaces[i] for i in range(disc_action)], dtype=int).sum()
@@ -204,6 +209,8 @@ class Agent:
             pass
 
         chosen_cont_action = np.clip(cont_actions[offset_start:offset_end], -1, 1)
+        chosen_cont_action = (chosen_cont_action + 1)*0.5
+        chosen_cont_action = (self.cont_act_max[disc_action] - self.cont_act_min[disc_action]) * chosen_cont_action + self.cont_act_min[disc_action]
 
         return disc_action, chosen_cont_action, cont_actions
 
@@ -215,30 +222,32 @@ class Agent:
             disc_actor_weights = []
             disc_actor_targets = self.disc_actor_target.weights
             
-            for idx, weight in enumerate(self.disc_actor_main.weights):
+            for idx, weight in enumerate(self.disc_actor_main.get_weights()):
                 disc_actor_weights.append(weight * self.discrete_tau + disc_actor_targets[idx] * (1 - self.discrete_tau))
             self.disc_actor_target.set_weights(disc_actor_weights)
-        
-        if self.extension_config['use_Twin_Delay']:
+
+        if self.continuous_tau == None:
+            cont_actor_weithgs = self.cont_actor_main.get_weights()
+            self.cont_actor_target.set_weights(cont_actor_weithgs)
+        else:
             cont_actor_weithgs = []
             cont_actor_targets = self.cont_actor_target.weights
             
-            for idx, weight in enumerate(self.cont_actor_main.weights):
+            for idx, weight in enumerate(self.cont_actor_main.get_weights()):
                 cont_actor_weithgs.append(weight * self.continuous_tau + cont_actor_targets[idx] * (1 - self.continuous_tau))
             self.cont_actor_target.set_weights(cont_actor_weithgs)
 
-    def update(self)-> None:
-        if self.replay_buffer._len() < self.batch_size:
-            return False, 0.0, 0.0, 0.0, 0.0
 
-        self.update_step += 1
+    def update(self)-> None:
+        self.update_call_step += 1
+
+        if (self.replay_buffer._len() < self.batch_size) or (self.update_call_step % self.update_freq != 0):
+            return False, 0.0, 0.0, 0.0, 0.0
 
         updated = True
         self.update_step += 1
-        self.critic_steps += 1
 
-        actor_loss_val, criitic_loss1_val, ciritic_loss2_val = 0.0, 0.0, 0.0
-        target_q_val, current_q_1_val, current_q_2_val = 0.0, 0.0, 0.0
+        disc_actor_loss_val, target_q_val, current_q_val = 0.0, 0.0, 0.0
 
         if self.agent_config['use_PER']:
             states, next_states, rewards, actions, dones, idxs, is_weight = self.replay_buffer.sample(self.batch_size)
@@ -253,12 +262,6 @@ class Agent:
             actions = tf.convert_to_tensor(actions, dtype = tf.float32)
             dones = tf.convert_to_tensor(dones, dtype = tf.bool)
             is_weight = tf.convert_to_tensor(is_weight, dtype=tf.float32)
-            # print('states : {}'.format(states.numpy().shape), states)
-            # print('next_states : {}'.format(next_states.numpy().shape), next_states)
-            # print('rewards : {}'.format(rewards.numpy().shape), rewards)
-            # print('actions : {}'.format(actions.numpy().shape), actions)
-            # print('dones : {}'.format(dones.numpy().shape), dones)
-            # print('is_weight : {}'.format(is_weight.numpy().shape), is_weight)
 
         else:
             states, next_states, rewards, actions, dones = self.replay_buffer.sample(self.batch_size)
@@ -276,37 +279,60 @@ class Agent:
             cont_actions = tf.convert_to_tensor(cont_actions, dtype = tf.float32)
             dones = tf.convert_to_tensor(dones, dtype = tf.bool)
 
+        # print(f"states : {states.shape}")
+        # print(f"next_states : {next_states.shape}")
+        # print(f"rewards : {rewards.shape}")
+        # print(f"actions : {actions.shape}")
+        # print(f"disc_actions : {disc_actions.shape}")
+        # print(f"cont_actions : {cont_actions.shape}")
+        # print(f"dones : {dones.shape}")
+
+        ## dist_actor update
         disc_actor_variable = self.disc_actor_main.trainable_variables
         with tf.GradientTape() as tape_disc_actor:
             tape_disc_actor.watch(disc_actor_variable)
+
+            # target
             target_cont_action = self.cont_actor_target(next_states)
-            # print('next_states : {}'.format(next_states.numpy().shape))
-            # print('target_action : {}'.format(target_cont_action.numpy().shape))
-            # print('before squeeze q_next : {}'.format(self.disc_actor_target(tf.concat([next_states,target_cont_action], 1)).numpy().shape))
+            # print(f"target_cont_action: {target_cont_action.shape}")
+            current_q_next = self.disc_actor_main(tf.concat([next_states, target_cont_action], axis=1))
+            # print(f"current_q_next: {current_q_next.shape}")
+            next_action = tf.argmax(current_q_next, axis=1)
+            # print(f"next_action: {next_action.shape}")
+            indices = tf.stack([range(self.batch_size), next_action], axis=1)
+            # print(f"indices: {indices.shape}")
 
-            target_q_next = self.disc_actor_target(tf.concat([next_states,target_cont_action], 1))
-            # print('target_q_next : {}'.format(target_q_next.numpy().shape))
+            target_q_next = tf.cond(tf.convert_to_tensor(self.extension_config['use_DDQN'], dtype=tf.bool),\
+                    lambda: tf.gather_nd(params=self.disc_actor_target(tf.concat([next_states, target_cont_action], axis=1)), indices=indices), \
+                    lambda: tf.reduce_max(self.disc_actor_target(tf.concat([next_states, target_cont_action], axis=1)), axis=1))
+            # print(f"[states, cont_action]: {tf.concat([next_states,target_cont_action], 1).shape}")
+            # print(f"target_q_next: {target_q_next.shape}")
 
-            target_q = tf.add(tf.expand_dims(rewards, axis=1), tf.multiply(self.gamma, tf.multiply(target_q_next, tf.expand_dims(tf.subtract(1.0, tf.cast(dones, dtype=tf.float32)),axis=1))))
-            # print('target_q : {}'.format(target_q.numpy().shape))
+            target_q = rewards + self.gamma * target_q_next * (1.0 - tf.cast(dones, dtype=tf.float32))
+            target_q = tf.stop_gradient(target_q)
+            # print(f"target_q : {target_q.shape}")
 
-            # print('before squeeze current_q : {}'.format(self.disc_actor_target(tf.concat([states,cont_actions], 1)).numpy().shape))
-            current_q = self.disc_actor_main(tf.concat([states,cont_actions], 1))
-            # print('current_q : {}'.format(current_q.numpy().shape))
+            current_q = self.disc_actor_main(tf.concat([states, cont_actions], axis=1))
+            # print(f"current_q : {current_q.shape}")
+            action_one_hot = tf.one_hot(tf.cast(disc_actions, tf.int32), self.disc_act_space)
+            # print(f"action_one_hot: {action_one_hot.shape}")
+            current_q = tf.reduce_sum(tf.multiply(current_q, action_one_hot), axis=1)
+            # print(f"current_q: {current_q.shape}")
 
             disc_actor_loss = tf.subtract(current_q, target_q)
-            # print('disc_actor_loss : {}'.format(disc_actor_loss.numpy().shape))
+            disc_actor_huber_loss = tf.where(tf.less(tf.math.abs(disc_actor_loss), 1.0), 1/2 * tf.math.square(disc_actor_loss), 1.0 * tf.abs(disc_actor_loss) - 1.0 * 1/2)
+            # print(f"disc_actor_loss : {disc_actor_loss.shape}")
+            # print(f"disc_actor_huber_loss : {disc_actor_huber_loss.shape}")
             
-            # (tf.abs(td_errors_1) + tf.abs(td_errors_2))/10 * is_weight
-            td_errors = tf.cond(tf.convert_to_tensor(self.agent_config['use_PER'], dtype=tf.bool),\
-                                lambda: tf.multiply(is_weight, tf.multiply(0.5, tf.math.square(disc_actor_loss))),\
-                                lambda: tf.multiply(0.5, tf.math.square(disc_actor_loss)))
-            # print('td_errors : {}'.format(td_errors.numpy().shape))
+            critic_losses = tf.cond(tf.convert_to_tensor(self.agent_config['use_PER'], dtype=tf.bool),\
+                                lambda: tf.multiply(is_weight, disc_actor_huber_loss),\
+                                lambda: disc_actor_huber_loss)
+            # print(f"critic_losses : {critic_losses.shape}")
 
-            td_error = tf.math.reduce_mean(td_errors)
-            # print('td_error : {}'.format(td_error.numpy().shape))
+            critic_loss = tf.math.reduce_mean(critic_losses)
+            # print(f"critic_loss : {critic_loss.shape}")
             
-        grads_disc_actor, _ = tf.clip_by_global_norm(tape_disc_actor.gradient(td_error, disc_actor_variable), 0.5)
+        grads_disc_actor, _ = tf.clip_by_global_norm(tape_disc_actor.gradient(critic_loss, disc_actor_variable), 0.5)
         self.disc_actor_opt_main.apply_gradients(zip(grads_disc_actor, disc_actor_variable))
 
         disc_actor_loss_val = tf.math.reduce_mean(disc_actor_loss).numpy()
@@ -319,7 +345,7 @@ class Agent:
             tape_cont_actor.watch(cont_actor_variable)
 
             new_cont_actions = self.cont_actor_main(states)
-            # print('new_policy_actions : {}'.format(new_policy_actions.numpy().shape))
+            # print(f"new_cont_actions : {new_cont_actions.shape}")
 
             cont_actor_loss = -self.disc_actor_main(tf.concat([states, new_cont_actions],1))
             # print('actor_loss : {}'.format(actor_loss.numpy().shape))
@@ -333,7 +359,8 @@ class Agent:
 
         cont_actor_loss_val = cont_actor_loss.numpy()
 
-        self.update_target()
+        if self.update_step % self.target_update_freq == 0:
+            self.update_target()
 
         if self.agent_config['use_PER']:
             for i in range(self.batch_size):
@@ -391,7 +418,7 @@ class Agent:
             # print(f'concat_action: {np.concatenate(([disc_action],np.squeeze(cont_action))).ravel()}')
             # print(f'done: {done}')
             
-            self.replay_buffer.add((state, next_state, reward, np.concatenate(([disc_action],np.squeeze(cont_action))).ravel(), done))
+            self.replay_buffer.add((state, next_state, reward, np.concatenate(([disc_action], np.squeeze(cont_action))).ravel(), done))
 
     def load_models(self, path: str):
         print('Load Model Path : ', path)

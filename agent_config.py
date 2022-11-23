@@ -27,10 +27,11 @@ PA_DDPG_Variation2_agent_config['extension'] = {'name': 'Vanilla', 'gaussian_std
 
 
 # P-DQN  
-P_DQN_Vanilla_agent_config = {'agent_name': 'P-DQN', 'gamma' : 0.99, 'discrete_tau': 0.005, 'continuous_tau': 0.005, 'update_freq': 2, 'batch_size': 128, 'warm_up': 1024,
-                        'lr_disc_actor': 0.0005, 'lr_cont_actor': 0.0005, 'buffer_size': 2000000, 'use_PER': False, 'use_ERE': False, 'reward_normalize' : False}
+P_DQN_Vanilla_agent_config = {'agent_name': 'P-DQN', 'gamma' : 0.99, 'discrete_tau': 0.005, 'continuous_tau': 0.005, 'update_freq': 2, 'target_update_freq': 1,
+                        'batch_size': 128, 'warm_up': 1024, 'lr_disc_actor': 0.0005, 'lr_cont_actor': 0.0005, 'buffer_size': 2000000,
+                        'use_PER': False, 'use_ERE': False, 'reward_normalize' : False}
 P_DQN_Vanilla_agent_config['extension'] = {'name': 'Vanilla', 'gaussian_std': 0.1, 'noise_clip': 0.5, 'noise_reduction_rate': 0.999999, 'use_Twin_Delay': False,
-                                           'epsilon': 0.99, 'epsilon_decaying_rate': 0.9999, 'min_epsilon': 0.1, 'use_Double_DQN': False}
+                                           'epsilon': 0.99, 'epsilon_decaying_rate': 0.9999, 'min_epsilon': 0.1, 'use_DDQN': False}
 
 # Todo
 P_TDDQN_agent_config = {'agent_name': 'P-DQN', 'gamma' : 0.99, 'tau': 0.005, 'update_freq': 2, 'batch_size': 128, 'warm_up': 1024, 
