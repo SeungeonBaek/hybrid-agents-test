@@ -15,6 +15,9 @@ from tensorflow.keras.layers import LayerNormalization
 from utils.prioritized_memory_numpy import PrioritizedMemory
 from utils.replay_buffer import ExperienceMemory
 
+from agents.ICM_model import ICM_model
+from agents.RND_model import RND_target, RND_predict
+
 
 class ContinuousActor(Model):
     def __init__(self,
@@ -54,7 +57,7 @@ class DiscreteActor(Model):
         self.l1_ln = LayerNormalization(axis=-1)
         self.l2 = Dense(256, activation = 'relu' , kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
         self.l2_ln = LayerNormalization(axis=-1)
-        self.value = tf.keras.layers.Dense(self.discrete_act_spac, activation = None)
+        self.value = Dense(self.discrete_act_spac, activation = None)
 
     def call(self, state: Union[NDArray, tf.Tensor])-> tf.Tensor:
         l1 = self.l1(state)
@@ -146,6 +149,25 @@ class Agent:
         if self.extension_config['use_Double_DQN']:
             pass
 
+        if self.extension_name == 'ICM':
+            self.icm_update_freq = self.extension_config['icm_update_freq']
+
+            self.icm_lr = self.extension_config['icm_lr']
+            self.icm_feature_dim = self.extension_config['icm_feature_dim']
+            # self.icm = ICM_model(self.obs_space, self.act_space, self.icm_feature_dim) # Todo
+            self.icm_opt = Adam(self.icm_lr)
+
+        elif self.extension_name == 'RND':
+            self.rnd_update_freq = self.extension_config['rnd_update_freq']
+
+            self.rnd_lr = self.extension_config['rnd_lr']
+            # self.rnd_target = RND_target(self.obs_space, self.act_space) # Todo
+            # self.rnd_predict = RND_predict(self.obs_space, self.act_space) # Todo
+            self.rnd_opt = Adam(self.rnd_lr)
+
+        elif self.extension_name == 'NGU':
+            self.icm_lr = self.extension_config['ngu_lr']
+
     def action(self, obs)-> Tuple[NDArray, NDArray, NDArray]:
         obs = tf.convert_to_tensor([obs], dtype=tf.float32)
         # print('in action, obs: ', np.shape(np.array(obs)), obs)
@@ -153,13 +175,14 @@ class Agent:
         # print('in action, mu: ', np.shape(np.array(mu)), mu)
 
         # epsilon-greedy
-        rnd = np.random.rand()
-        if rnd < self.epsilon:
-            disc_action = np.random.choice(self.disc_act_space)
+        random_val = np.random.rand()
+        if self.update_step > self.warm_up:
+            if random_val < self.epsilon:
+                disc_action = np.random.choice(self.disc_act_space)
 
-        else:
-            q_value = self.disc_actor_main(tf.concat([obs, cont_actions], axis=1))
-            disc_action = np.argmax(q_value.numpy())
+            else:
+                q_value = self.disc_actor_main(tf.concat([obs, cont_actions], axis=1))
+                disc_action = np.argmax(q_value.numpy())
 
         cont_actions = cont_actions.numpy()[0]
         offset_start = np.array([self.cont_act_spaces[i] for i in range(disc_action)], dtype=int).sum()

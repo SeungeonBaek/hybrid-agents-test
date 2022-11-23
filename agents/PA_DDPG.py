@@ -1,4 +1,4 @@
-from typing import Dict, Union, Any
+from typing import Dict, Union, Any, Tuple
 from numpy.typing import NDArray
 
 import tensorflow as tf
@@ -10,6 +10,7 @@ from tensorflow.keras import Model
 from tensorflow.keras import initializers
 from tensorflow.keras import regularizers
 from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import LayerNormalization
 
 from utils.prioritized_memory_numpy import PrioritizedMemory
 from utils.replay_buffer import ExperienceMemory

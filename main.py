@@ -3,14 +3,16 @@ from datetime import datetime
 from typing import Dict
 
 import numpy as np
-import gym
 import pandas as pd
 
 from tensorboardX import SummaryWriter
 
 from agent_env_config import env_agent_config
+
 from utils.rl_logger import RLLogger
 from utils.rl_loader import RLLoader
+
+from utils.state_logger import StateLogger
 
 
 def pad_action(act, act_param):
@@ -21,10 +23,20 @@ def pad_action(act, act_param):
     return (act, params)
 
 
-def main(env_config: Dict, agent_config: Dict, rl_confing: Dict, data_save_path: str, rl_logger: RLLogger, rl_loader: RLLoader):
+def main(env_config: Dict,
+         agent_config: Dict,
+         rl_confing: Dict,
+         rl_custom_config: Dict,
+         result_path:str,
+         rl_logger: RLLogger,
+         rl_loader: RLLoader,
+         state_logger: StateLogger):
     # Env
     env, env_obs_space, env_act_space, action_config = rl_loader.env_loader()
-    print(f"env_name : {env_config['env_name']}, obs_space : {env_obs_space}, act_space : {env_act_space}")
+    env_name = env_config['env_name']
+    print(f"env_name : {env_name}, obs_space : {env_obs_space}, act_space : {env_act_space}")
+
+    act_space = env_act_space
 
     if len(env_obs_space) > 1:
         for space in env_obs_space:
@@ -32,17 +44,30 @@ def main(env_config: Dict, agent_config: Dict, rl_confing: Dict, data_save_path:
     else:
         obs_space = env_obs_space[0]
 
+    max_step = env_config['max_step']
+
     # Agent
     RLAgent = rl_loader.agent_loader()
     Agent = RLAgent(agent_config, obs_space, action_config)
-    print(f"agent_name: {agent_config['agent_name']}")
+
+    if rl_custom_config['use_learned_model']:
+        if os.name == 'nt':
+            Agent.load_models(path=result_path + "\\" + str(rl_custom_config['learned_model_score']) + "_model")
+        elif os.name == 'posix':
+            Agent.load_models(path=result_path + "/" + str(rl_custom_config['learned_model_score']) + "_model")
+    else:
+        pass
+
+    agent_name = agent_config['agent_name']
+    extension_name = Agent.extension_name
+    print(f"agent_name: {agent_name}, extension_name: {extension_name}")
 
     # csv logging
     if rl_confing['csv_logging']:
-        episode_data = dict()
-        episode_data['episode_score'] = np.zeros(env_config['max_episode'], dtype=np.float32)
-        episode_data['mean_reward']   = np.zeros(env_config['max_episode'], dtype=np.float32)
-        episode_data['episode_step']  = np.zeros(env_config['max_episode'], dtype=np.float32)
+        state_logger.initialize_memory(env_config['max_episode'], max_step, act_space)
+
+    total_step = 0
+    max_score = 0
 
     for episode_num in range(1, env_config['max_episode']):
         episode_score = 0
@@ -55,10 +80,9 @@ def main(env_config: Dict, agent_config: Dict, rl_confing: Dict, data_save_path:
         episode_rewards = []
 
         obs = env.reset()
-
-        if env_config['env_name'] == 'Goal' or env_config['env_name'] == 'Platform':
+        if env_name == 'Goal' or env_name == 'Platform':
             obs = np.append(obs[:-1][0],obs[-1])
-        elif env_config['env_name'] == 'Move':
+        elif env_name == 'Move':
             obs = obs
 
         obs = np.array(obs)
@@ -70,6 +94,7 @@ def main(env_config: Dict, agent_config: Dict, rl_confing: Dict, data_save_path:
             if env_config['render']:
                 env.render()
             episode_step += 1
+            total_step += 1
 
             if agent_config['agent_name'] == 'HPPO':
                 act, act_param, all_action_parameters, log_policy = Agent.action(obs)
@@ -78,10 +103,11 @@ def main(env_config: Dict, agent_config: Dict, rl_confing: Dict, data_save_path:
             
             action = pad_action(act, act_param)
 
-            if env_config['env_name'] == 'Goal' or env_config['env_name'] == 'Platform':
+            if env_name == 'Goal' or env_name == 'Platform':
                 obs, reward, done, _ = env.step(action)
+                reward = reward * 100
                 obs = np.append(obs[:-1][0],obs[-1])
-            elif env_config['env_name'] == 'Move':
+            elif env_name == 'Move':
                 obs, reward, done, _ = env.step(action)
 
             obs = np.array(obs)
@@ -110,22 +136,30 @@ def main(env_config: Dict, agent_config: Dict, rl_confing: Dict, data_save_path:
             
             rl_logger.step_logging(Agent)
 
+            if rl_config['csv_logging']:
+                state_logger.step_logger(episode_num=episode_num, episode_step=episode_step, origin_obs=None, obs=obs, action_values=None, action=action)
+
         env.close()
 
         rl_logger.episode_logging(Agent, episode_score, episode_step, episode_num, episode_rewards)
 
         if rl_confing['csv_logging']:
-            episode_data['episode_score'][episode_num-1] = episode_score
-            episode_data['mean_reward'][episode_num-1]   = episode_score/episode_step
-            episode_data['episode_step'][episode_num-1]  = episode_step
+            state_logger.episode_logger(episode_score, episode_step)
+            state_logger.save_data(episode_num)
 
-            if episode_num % 10 == 0:
-                episode_data_df = pd.DataFrame(episode_data)
-                episode_data_df.to_csv(data_save_path+'episode_data.csv', mode='w',encoding='UTF-8' ,compression=None)
+        if episode_score > max_score:
+            if os.name == 'nt':
+                pass
+                # Agent.save_models(path=result_path + "\\", score=round(episode_score, 3))
+            elif os.name == 'posix':
+                pass
+                # Agent.save_models(path=result_path + "/", score=round(episode_score, 3))
+            max_score = episode_score
 
         print('epi_num : {episode}, epi_step : {step}, score : {score}, mean_reward : {mean_reward}'.format(episode= episode_num, step= episode_step, score = episode_score, mean_reward=episode_score/episode_step))
         
     env.close()
+
 
 if __name__ == '__main__':
     """
@@ -147,13 +181,18 @@ if __name__ == '__main__':
 
     env_config, agent_config = env_agent_config(env_switch, agent_switch)
     
-    rl_config = {'csv_logging': True, 'wandb': False, 'tensorboard': True}
+    rl_config = {'csv_logging': False, 'wandb': False, 'tensorboard': True}
+    rl_custom_config = {'use_learned_model': False, 'learned_model_score': 59.009}
 
     parent_path = str(os.path.abspath(''))
     time_string = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
 
-    result_path = parent_path + '/results/{env}/{agent}/{extension}_result/'.format(env=env_config['env_name'], agent=agent_config['agent_name'], extension=agent_config['extension']['name']) + time_string
-    data_save_path = parent_path + '\\results\\{env}\\{agent}\\{extension}_result\\'.format(env=env_config['env_name'], agent=agent_config['agent_name'], extension=agent_config['extension']['name']) + time_string + '\\'
+    result_path = parent_path + f"/results/{env_config['env_name']}/{agent_config['agent_name']}/{agent_config['extension']['name']}_result/" + time_string
+
+    if os.name == 'nt':
+        data_save_path = parent_path + f"\\results\\{env_config['env_name']}\\{agent_config['agent_name']}_{agent_config['extension']['name']}_result\\" + time_string + '\\'
+    elif os.name == 'posix':
+        data_save_path = parent_path + f"/results/{env_config['env_name']}/{agent_config['agent_name']}_{agent_config['extension']['name']}_result/" + time_string + '/'
 
     summary_writer = SummaryWriter(result_path+'/tensorboard/')
     if rl_config['wandb'] == True:
@@ -165,4 +204,6 @@ if __name__ == '__main__':
     rl_logger = RLLogger(agent_config, rl_config, summary_writer, wandb_session)
     rl_loader = RLLoader(env_config, agent_config)
 
-    main(env_config, agent_config, rl_config, data_save_path, rl_logger, rl_loader)
+    state_logger = StateLogger(env_config, agent_config, rl_config, data_save_path)
+
+    main(env_config, agent_config, rl_config, rl_custom_config, result_path, rl_logger, rl_loader, state_logger)
