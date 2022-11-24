@@ -101,10 +101,7 @@ def main(env_config: Dict,
             else:
                 act, act_param, all_action_parameters = Agent.action(obs)
             
-            print(f"act: {act}")
-            print(f"act_param: {act_param}")
             action = pad_action(act, act_param)
-            raise RuntimeError('debug')
 
             if env_name == 'Goal' or env_name == 'Platform':
                 obs, reward, done, _ = env.step(action)
