@@ -30,16 +30,26 @@ class ContinuousActor(Model):
 
         self.l1 = Dense(256, activation = 'relu', kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
         self.l1_ln = LayerNormalization(axis=-1)
-        self.l2 = Dense(256, activation = 'relu', kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
+
+        self.l2 = Dense(128, activation = 'relu', kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
         self.l2_ln = LayerNormalization(axis=-1)
+
+        self.l3 = Dense(64, activation = 'relu', kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
+        self.l3_ln = LayerNormalization(axis=-1)
+
         self.mu = Dense(self.continuous_act_space, activation='tanh')
 
     def call(self, state: Union[NDArray, tf.Tensor])-> tf.Tensor:
         l1 = self.l1(state)
         l1_ln = self.l1_ln(l1)
+
         l2 = self.l2(l1_ln)
         l2_ln = self.l2_ln(l2)
-        mu = self.mu(l2_ln)
+
+        l3 = self.l3(l2_ln)
+        l3_ln = self.l3_ln(l3)
+
+        mu = self.mu(l3_ln)
 
         return mu
 
@@ -55,16 +65,32 @@ class DiscreteActor(Model):
 
         self.l1 = Dense(256, activation = 'relu' , kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
         self.l1_ln = LayerNormalization(axis=-1)
-        self.l2 = Dense(256, activation = 'relu' , kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
+
+        self.l2 = Dense(128, activation = 'relu' , kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
         self.l2_ln = LayerNormalization(axis=-1)
+
+        self.l3 = Dense(64, activation = 'relu' , kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
+        self.l3_ln = LayerNormalization(axis=-1)
+
+        self.l4 = Dense(32, activation = 'relu' , kernel_initializer=self.initializer, kernel_regularizer=self.regularizer)
+        self.l4_ln = LayerNormalization(axis=-1)
+
         self.value = Dense(self.discrete_act_spac, activation = None)
 
     def call(self, state: Union[NDArray, tf.Tensor])-> tf.Tensor:
         l1 = self.l1(state)
         l1_ln = self.l1_ln(l1)
+
         l2 = self.l2(l1_ln)
         l2_ln = self.l2_ln(l2)
-        value = self.value(l2_ln)
+
+        l3 = self.l3(l2_ln)
+        l3_ln = self.l3_ln(l3)
+
+        l4 = self.l4(l3_ln)
+        l4_ln = self.l4_ln(l4)
+
+        value = self.value(l4_ln)
 
         return value
 
@@ -209,13 +235,8 @@ class Agent:
             pass
 
         chosen_cont_action = np.clip(cont_actions[offset_start:offset_end], -1, 1)
-        print(f"chosen_cont_action: {chosen_cont_action}")
         chosen_cont_action = (chosen_cont_action + 1)*0.5
-        print(f"chosen_cont_action: {chosen_cont_action}")
         chosen_cont_action = (self.cont_act_max[disc_action] - self.cont_act_min[disc_action]) * chosen_cont_action + self.cont_act_min[disc_action]
-        print(f"self.cont_act_max[disc_action]: {self.cont_act_max[disc_action]}")
-        print(f"self.cont_act_min[disc_action]: {self.cont_act_min[disc_action]}")
-        print(f"chosen_cont_action: {chosen_cont_action}")
 
         return disc_action, chosen_cont_action, cont_actions
 

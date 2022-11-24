@@ -15,11 +15,10 @@ from utils.rl_loader import RLLoader
 from utils.state_logger import StateLogger
 
 
-def pad_action(act, act_param):
-    params = [np.zeros((1,), dtype=np.float32), np.zeros((1,), dtype=np.float32), np.zeros((1,), dtype=np.float32)]
-    # print('act :', act)
-    # print('act_param :', act_param)
+def pad_action(act, act_param, action_config):
+    params = [np.zeros((i,), dtype=np.float32) for i in action_config['cont_act_spaces']]
     params[act][:] = act_param
+
     return (act, params)
 
 
@@ -101,12 +100,17 @@ def main(env_config: Dict,
             else:
                 act, act_param, all_action_parameters = Agent.action(obs)
             
-            action = pad_action(act, act_param)
+            action = pad_action(act, act_param, action_config)
 
-            if env_name == 'Goal' or env_name == 'Platform':
+            if env_name == 'Platform':
                 obs, reward, done, _ = env.step(action)
                 reward = reward * 10
                 obs = np.append(obs[:-1][0],obs[-1])
+
+            elif env_name == 'Goal':
+                obs, reward, done, _ = env.step(action)
+                obs = np.append(obs[:-1][0],obs[-1])
+
             elif env_name == 'Move':
                 obs, reward, done, _ = env.step(action)
 
@@ -176,7 +180,7 @@ if __name__ == '__main__':
     21: HHQN,    22: 
     """
     
-    env_switch = 1
+    env_switch = 2
     agent_switch = 9
 
     env_config, agent_config = env_agent_config(env_switch, agent_switch)
