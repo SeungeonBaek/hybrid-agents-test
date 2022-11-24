@@ -34,7 +34,7 @@ def main(env_config: Dict,
     # Env
     env, env_obs_space, env_act_space, action_config = rl_loader.env_loader()
     env_name = env_config['env_name']
-    print(f"env_name : {env_name}, obs_space : {env_obs_space}, act_space : {env_act_space}")
+    print(f"env_name : {env_name}, obs_space : {env_obs_space}, act_space : {env_act_space},\nact_config : {action_config}")
 
     act_space = env_act_space
 
@@ -101,7 +101,10 @@ def main(env_config: Dict,
             else:
                 act, act_param, all_action_parameters = Agent.action(obs)
             
+            print(f"act: {act}")
+            print(f"act_param: {act_param}")
             action = pad_action(act, act_param)
+            raise RuntimeError('debug')
 
             if env_name == 'Goal' or env_name == 'Platform':
                 obs, reward, done, _ = env.step(action)
@@ -156,7 +159,7 @@ def main(env_config: Dict,
                 # Agent.save_models(path=result_path + "/", score=round(episode_score, 3))
             max_score = episode_score
 
-        print('epi_num : {episode}, epi_step : {step}, score : {score}, mean_reward : {mean_reward}'.format(episode= episode_num, step= episode_step, score = episode_score, mean_reward=episode_score/episode_step))
+        print(f"epi_num : {episode_num}, epi_step : {episode_step}, score : {episode_score}, mean_reward : {episode_score/episode_step}")
         
     env.close()
 
@@ -176,7 +179,7 @@ if __name__ == '__main__':
     21: HHQN,    22: 
     """
     
-    env_switch = 2
+    env_switch = 1
     agent_switch = 9
 
     env_config, agent_config = env_agent_config(env_switch, agent_switch)

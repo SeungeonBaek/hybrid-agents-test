@@ -209,8 +209,13 @@ class Agent:
             pass
 
         chosen_cont_action = np.clip(cont_actions[offset_start:offset_end], -1, 1)
+        print(f"chosen_cont_action: {chosen_cont_action}")
         chosen_cont_action = (chosen_cont_action + 1)*0.5
+        print(f"chosen_cont_action: {chosen_cont_action}")
         chosen_cont_action = (self.cont_act_max[disc_action] - self.cont_act_min[disc_action]) * chosen_cont_action + self.cont_act_min[disc_action]
+        print(f"self.cont_act_max[disc_action]: {self.cont_act_max[disc_action]}")
+        print(f"self.cont_act_min[disc_action]: {self.cont_act_min[disc_action]}")
+        print(f"chosen_cont_action: {chosen_cont_action}")
 
         return disc_action, chosen_cont_action, cont_actions
 

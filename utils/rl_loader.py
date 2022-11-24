@@ -14,15 +14,15 @@ class RLLoader():
         if self.env_config['env_name'] == 'Goal':
             import gym_goal
             env = gym.make('Goal-v0')
-            obs_space = env.observation_space.spaces[0].shape + 1 #((obs), time)
+            obs_space = tuple([env.observation_space.spaces[0].shape[0] + 1]) #((obs), time)
             act_space = env.action_space
 
             action_config = {'disc_act_spaces': act_space.spaces[0].n, \
-                            'cont_act_spaces': np.array([act_space.spaces[1][i].shape[0] for i in range(act_space.spaces[0].n)]), \
+                            'cont_act_spaces': np.array([act_space.spaces[1].spaces[i].shape[0] for i in range(act_space.spaces[0].n)]), \
                             'disc_act_max'   : 0, \
                             'disc_act_min'   : 0, \
-                            'cont_act_max'   : np.concatenate([act_space.spaces[1][i].high for i in range(act_space.spaces[0].n)]).ravel(), \
-                            'cont_act_min'   : np.concatenate([act_space.spaces[1][i].low for i in range(act_space.spaces[0].n)]).ravel()}
+                            'cont_act_max'   : np.array([act_space.spaces[1].spaces[i].high for i in range(act_space.spaces[0].n)]).ravel(), \
+                            'cont_act_min'   : np.array([act_space.spaces[1].spaces[i].low for i in range(act_space.spaces[0].n)]).ravel()}
 
         elif self.env_config['env_name'] == 'Platform':
             import gym_platform
@@ -34,8 +34,8 @@ class RLLoader():
                             'cont_act_spaces': np.array([act_space.spaces[1].spaces[i].shape[0] for i in range(act_space.spaces[0].n)]), \
                             'disc_act_max'   : 0, \
                             'disc_act_min'   : 0, \
-                            'cont_act_max'   : np.concatenate([act_space.spaces[1].spaces[i].high for i in range(act_space.spaces[0].n)]).ravel(), \
-                            'cont_act_min'   : np.concatenate([act_space.spaces[1].spaces[i].low for i in range(act_space.spaces[0].n)]).ravel()}
+                            'cont_act_max'   : np.array([act_space.spaces[1].spaces[i].high for i in range(act_space.spaces[0].n)]).ravel(), \
+                            'cont_act_min'   : np.array([act_space.spaces[1].spaces[i].low for i in range(act_space.spaces[0].n)]).ravel()}
 
         elif self.env_config['env_name'] == 'Move':
             import gym_hybrid
