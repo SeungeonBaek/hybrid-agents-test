@@ -230,6 +230,7 @@ class Agent:
             self.epsilon = self.epsilon * self.epsilon_decaying_rate
             if self.epsilon < self.min_epsilon:
                 self.epsilon = self.min_epsilon
+
             cont_actions[offset_start:offset_end] += np.clip(noises, - self.noise_clip, self.noise_clip)
         else:
             pass
@@ -435,6 +436,7 @@ class Agent:
             self.replay_buffer.add(td_error[0], (state, next_state, reward, action, done))
         else:
             disc_action, cont_action = action
+            
             # print(f'state: {state}')
             # print(f'next_state: {next_state}')
             # print(f'reward: {reward}')
@@ -443,7 +445,7 @@ class Agent:
             # print(f'cont_action: {cont_action}')
             # print(f'concat_action: {np.concatenate(([disc_action],np.squeeze(cont_action))).ravel()}')
             # print(f'done: {done}')
-            
+
             self.replay_buffer.add((state, next_state, reward, np.concatenate(([disc_action], np.squeeze(cont_action))).ravel(), done))
 
     def load_models(self, path: str):

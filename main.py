@@ -16,7 +16,7 @@ from utils.state_logger import StateLogger
 
 
 def pad_action(act, act_param, action_config):
-    params = [np.zeros((i,), dtype=np.float32) for i in action_config['cont_act_spaces']]
+    params = np.array([np.zeros((i,), dtype=np.float32) for i in action_config['cont_act_spaces']])
     params[act][:] = act_param
 
     return (act, params)
@@ -117,13 +117,13 @@ def main(env_config: Dict,
             obs = np.array(obs)
             obs = obs.reshape(-1)
 
-            action = np.array(action)
+            action = (act, all_action_parameters)
 
             episode_score += reward
             episode_rewards.append(reward)
 
             # Save_xp
-            if episode_step > 2:
+            if episode_step >= 2:
                 if agent_config['agent_name'] == 'HPPO':
                     Agent.save_xp(prev_obs, obs, reward, prev_action, prev_log_policy, done)
                 else:
@@ -180,7 +180,7 @@ if __name__ == '__main__':
     21: HHQN,    22: 
     """
     
-    env_switch = 2
+    env_switch = 1
     agent_switch = 9
 
     env_config, agent_config = env_agent_config(env_switch, agent_switch)
