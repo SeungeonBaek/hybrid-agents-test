@@ -101,15 +101,15 @@ def main(env_config: Dict,
                 act, act_param, all_action_parameters = Agent.action(obs)
             
             action = pad_action(act, act_param, action_config)
-
+            
             if env_name == 'Platform':
                 obs, reward, done, _ = env.step(action)
                 reward = reward * 10
-                obs = np.append(obs[:-1][0],obs[-1])
+                obs = np.append(obs[:-1][0], obs[-1]/200)
 
             elif env_name == 'Goal':
                 obs, reward, done, _ = env.step(action)
-                obs = np.append(obs[:-1][0],obs[-1])
+                obs = np.append(obs[:-1][0], obs[-1])
 
             elif env_name == 'Move':
                 obs, reward, done, _ = env.step(action)
@@ -145,10 +145,10 @@ def main(env_config: Dict,
 
         env.close()
 
-        rl_logger.episode_logging(Agent, episode_score, episode_step, episode_num, episode_rewards)
+        rl_logger.episode_logging(Agent, episode_score, episode_step, episode_num, episode_rewards, obs[-1])
 
         if rl_confing['csv_logging']:
-            state_logger.episode_logger(episode_score, episode_step)
+            state_logger.episode_logger(episode_score, episode_step, obs[-1])
             state_logger.save_data(episode_num)
 
         if episode_score > max_score:
@@ -160,7 +160,8 @@ def main(env_config: Dict,
                 # Agent.save_models(path=result_path + "/", score=round(episode_score, 3))
             max_score = episode_score
 
-        print(f"epi_num : {episode_num}, epi_step : {episode_step}, score : {episode_score}, mean_reward : {episode_score/episode_step}")
+        if episode_num % 50 == 0:
+            print(f"epi_num : {episode_num}, epi_step : {episode_step}, score : {episode_score}, mean_reward : {episode_score/episode_step}")
         
     env.close()
 
@@ -180,7 +181,7 @@ if __name__ == '__main__':
     21: HHQN,    22: 
     """
     
-    env_switch = 1
+    env_switch = 2
     agent_switch = 9
 
     env_config, agent_config = env_agent_config(env_switch, agent_switch)
@@ -205,7 +206,7 @@ if __name__ == '__main__':
     else:
         wandb_session = None
 
-    rl_logger = RLLogger(agent_config, rl_config, summary_writer, wandb_session)
+    rl_logger = RLLogger(env_config, agent_config, rl_config, summary_writer, wandb_session)
     rl_loader = RLLoader(env_config, agent_config)
 
     state_logger = StateLogger(env_config, agent_config, rl_config, data_save_path)

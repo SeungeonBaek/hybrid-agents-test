@@ -99,8 +99,8 @@ def platform_env_test():
     obs = np.append(obs[:-1][0],obs[-1])
     flat_obs = obs.reshape(-1)
 
-    print('original : ', np.shape(obs))
-    print('flat_obs : ', np.shape(flat_obs))
+    print('original : ', np.shape(obs), obs)
+    print('flat_obs : ', np.shape(flat_obs), flat_obs)
 
 
 def move_env_test():
@@ -269,7 +269,7 @@ if __name__ == "__main__":
     4: Hard Goal, 5: Hard move, 6: Domestic
     """
 
-    env_switch = 1
+    env_switch = 2
 
     if env_switch == 1:
         goal_env_test()

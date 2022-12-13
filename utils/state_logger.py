@@ -47,10 +47,19 @@ class StateLogger():
             else:
                 self.step_data[str(episode_num)][f'value_{act_idx}'] = np.zeros(max_step, dtype=np.float32)
 
-    def episode_logger(self, episode_num, episode_score, episode_step):
+    def episode_logger(self, episode_num, episode_score, episode_step, env_inner_step):
         self.episode_data['episode_score'][episode_num-1] = episode_score
         self.episode_data['mean_reward'][episode_num-1]   = episode_score/episode_step
         self.episode_data['episode_step'][episode_num-1]  = episode_step
+
+        if self.env_name == 'Platform':
+            self.episode_data['env_step'][episode_num-1]  = env_inner_step * 200
+
+        elif self.env_name == 'Goal':
+            pass
+
+        else:
+            pass
 
     def step_logger(self, episode_num, episode_step, origin_obs, obs, action_values, action):
         self.step_data[str(episode_num-1)]['num_of_step'][episode_step] = episode_step

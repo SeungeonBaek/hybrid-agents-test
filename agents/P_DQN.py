@@ -165,6 +165,7 @@ class Agent:
         self.extension_name = self.extension_config['name']
 
         self.std = self.extension_config['gaussian_std']
+        self.min_std = self.extension_config['min_std']
         self.noise_clip = self.extension_config['noise_clip']
         self.noise_reduce_rate = self.extension_config['noise_reduction_rate']
 
@@ -173,9 +174,6 @@ class Agent:
         self.min_epsilon = self.extension_config['min_epsilon']
 
         if self.extension_config['use_Twin_Delay']:
-            pass
-        
-        if self.extension_config['use_DDQN']:
             pass
 
         if self.extension_name == 'ICM':
@@ -212,6 +210,10 @@ class Agent:
             else:
                 q_value = self.disc_actor_main(tf.concat([obs, cont_actions], axis=1))
                 disc_action = np.argmax(q_value.numpy())
+            
+            self.epsilon = self.epsilon * self.epsilon_decaying_rate
+            if self.epsilon < self.min_epsilon:
+                self.epsilon = self.min_epsilon
         else:
             disc_action = np.random.choice(self.disc_act_space)
 
@@ -226,10 +228,8 @@ class Agent:
             noises = tf.squeeze(dist.sample())
             noises = noises.numpy()
             self.std = self.std * self.noise_reduce_rate
-
-            self.epsilon = self.epsilon * self.epsilon_decaying_rate
-            if self.epsilon < self.min_epsilon:
-                self.epsilon = self.min_epsilon
+            if self.std < self.min_std:
+                self.std = self.min_std
 
             cont_actions[offset_start:offset_end] += np.clip(noises, - self.noise_clip, self.noise_clip)
         else:
@@ -314,6 +314,29 @@ class Agent:
         # print(f"cont_actions : {cont_actions.shape}")
         # print(f"dones : {dones.shape}")
 
+        ## cont_actor update
+        cont_actor_variable = self.cont_actor_main.trainable_variables
+        with tf.GradientTape() as tape_cont_actor:
+            tape_cont_actor.watch(cont_actor_variable)
+
+            new_cont_actions = self.cont_actor_main(states)
+            # print(f"new_cont_actions : {new_cont_actions.shape}")
+
+            cont_actor_loss = -self.disc_actor_main(tf.concat([states, new_cont_actions],1))
+            # print('cont_actor_loss : {}'.format(cont_actor_loss.numpy().shape))
+
+            cont_actor_loss = tf.math.reduce_sum(cont_actor_loss, axis=1)
+            # print('cont_actor_loss : {}'.format(cont_actor_loss.numpy().shape))
+
+            cont_actor_loss = tf.math.reduce_mean(cont_actor_loss)
+            # print('cont_actor_loss : {}'.format(cont_actor_loss.numpy().shape))
+
+        grads_actor, _ = tf.clip_by_global_norm(tape_cont_actor.gradient(cont_actor_loss, cont_actor_variable), 0.5)
+        # grads_actor = tape_actor.gradient(cont_actor_loss, self.actor_main.trainable_variables)        
+        self.cont_actor_opt_main.apply_gradients(zip(grads_actor, cont_actor_variable))
+
+        cont_actor_loss_val = cont_actor_loss.numpy()
+
         ## dist_actor update
         disc_actor_variable = self.disc_actor_main.trainable_variables
         with tf.GradientTape() as tape_disc_actor:
@@ -366,25 +389,6 @@ class Agent:
         target_q_val  = tf.math.reduce_mean(target_q).numpy()
         current_q_val = tf.math.reduce_mean(current_q).numpy()
 
-        ## cont_actor update
-        cont_actor_variable = self.cont_actor_main.trainable_variables
-        with tf.GradientTape() as tape_cont_actor:
-            tape_cont_actor.watch(cont_actor_variable)
-
-            new_cont_actions = self.cont_actor_main(states)
-            # print(f"new_cont_actions : {new_cont_actions.shape}")
-
-            cont_actor_loss = -self.disc_actor_main(tf.concat([states, new_cont_actions],1))
-            # print('actor_loss : {}'.format(actor_loss.numpy().shape))
-
-            cont_actor_loss = tf.math.reduce_mean(cont_actor_loss)
-            # print('actor_loss : {}'.format(actor_loss.numpy().shape))
-
-        grads_actor, _ = tf.clip_by_global_norm(tape_cont_actor.gradient(cont_actor_loss, cont_actor_variable), 0.5)
-        # grads_actor = tape_actor.gradient(cont_actor_loss, self.actor_main.trainable_variables)        
-        self.cont_actor_opt_main.apply_gradients(zip(grads_actor, cont_actor_variable))
-
-        cont_actor_loss_val = cont_actor_loss.numpy()
 
         if self.update_step % self.target_update_freq == 0:
             self.update_target()

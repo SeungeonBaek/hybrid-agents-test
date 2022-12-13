@@ -1,7 +1,8 @@
 
 
 class RLLogger():
-    def __init__(self, agent_config, rl_config, summary_writer = None, wandb_session = None):
+    def __init__(self, env_config, agent_config, rl_config, summary_writer = None, wandb_session = None):
+        self.env_config = env_config
         self.agent_config = agent_config
         self.rl_config = rl_config
         self.summary_writer = summary_writer
@@ -13,11 +14,11 @@ class RLLogger():
         if self.rl_config['wandb'] == True:
             self.step_logging_wandb(Agent)
 
-    def episode_logging(self, Agent, episode_score, episode_step, episode_num, episode_rewards):
+    def episode_logging(self, Agent, episode_score, episode_step, episode_num, episode_rewards, env_inner_step):
         if self.rl_config['tensorboard'] == True:
-            self.episode_logging_tensorboard(Agent, episode_score, episode_step, episode_num, episode_rewards)
+            self.episode_logging_tensorboard(Agent, episode_score, episode_step, episode_num, episode_rewards, env_inner_step)
         if self.rl_config['wandb'] == True:
-            self.episode_logging_wandb(Agent, episode_score, episode_step, episode_num, episode_rewards)
+            self.episode_logging_wandb(Agent, episode_score, episode_step, episode_num, episode_rewards, env_inner_step)
 
     def step_logging_tensorboard(self, Agent):
         # update
@@ -238,13 +239,22 @@ class RLLogger():
                     '02_Critic/Critic_2_value': critic_2_value
                 }, step=self.Agent.update_step)
 
-    def episode_logging_tensorboard(self, Agent, episode_score, episode_step, episode_num, episode_rewards):
+    def episode_logging_tensorboard(self, Agent, episode_score, episode_step, episode_num, episode_rewards, env_inner_step):
         if self.agent_config['agent_name'] == 'P-DQN': # Todo
             pass
 
         self.summary_writer.add_scalar('00_Episode/Score', episode_score, episode_num)
         self.summary_writer.add_scalar('00_Episode/Average_reward', episode_score/episode_step, episode_num)
         self.summary_writer.add_scalar('00_Episode/Steps', episode_step, episode_num)
+
+        if self.env_config['env_name'] == 'Platform':
+            self.summary_writer.add_scalar('00_Episode/Env_step', env_inner_step * 200, episode_num)
+
+        elif self.env_config['env_name'] == 'Goal':
+            pass
+
+        else:
+            pass
 
         self.summary_writer.add_histogram('Reward_histogram', episode_rewards, episode_num)
 
