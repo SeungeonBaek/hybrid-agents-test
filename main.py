@@ -80,7 +80,8 @@ def main(env_config: Dict,
 
         obs = env.reset()
         if env_name == 'Goal' or env_name == 'Platform':
-            obs = np.append(obs[:-1][0],obs[-1])
+            obs = np.append(obs[:-1][0],obs[-1]/200)
+
         elif env_name == 'Move':
             obs = obs
 
@@ -109,7 +110,8 @@ def main(env_config: Dict,
 
             elif env_name == 'Goal':
                 obs, reward, done, _ = env.step(action)
-                obs = np.append(obs[:-1][0], obs[-1])
+                reward = reward / 25
+                obs = np.append(obs[:-1][0], obs[-1]/200)
 
             elif env_name == 'Move':
                 obs, reward, done, _ = env.step(action)

@@ -247,10 +247,10 @@ class RLLogger():
         self.summary_writer.add_scalar('00_Episode/Average_reward', episode_score/episode_step, episode_num)
         self.summary_writer.add_scalar('00_Episode/Steps', episode_step, episode_num)
 
-        if self.env_config['env_name'] == 'Platform':
+        if self.env_config['env_name'] == 'Platform' or self.env_config['env_name'] == 'Goal':
             self.summary_writer.add_scalar('00_Episode/Env_step', env_inner_step * 200, episode_num)
 
-        elif self.env_config['env_name'] == 'Goal':
+        elif self.env_config['env_name'] == 'Move':
             pass
 
         else:
