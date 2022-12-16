@@ -44,7 +44,7 @@ class RLLoader():
             act_space = env.action_space
 
             action_config = {'disc_act_spaces': env.action_space.spaces[0].n, \
-                        'cont_act_spaces': np.array([1, 1, 0], dtype=np.float32), \
+                        'cont_act_spaces': np.array([1, 1, 0], dtype=np.int32), \
                         'disc_act_max'   : 0, \
                         'disc_act_min'   : 0, \
                         'cont_act_max'   : np.concatenate([env.action_space.spaces[1].high]).ravel(), \

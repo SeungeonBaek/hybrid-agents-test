@@ -38,7 +38,7 @@ class ExperienceMemory():
             reward.append(np.array(r, copy=False))
             action.append(np.array(a, copy=False))
             done.append(np.array(d, copy=False))
-        
+
         return np.array(state), np.array(next_state), np.array(reward), np.array(action), np.array(done)
 
     def clear(self):

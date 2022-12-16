@@ -16,9 +16,15 @@ from utils.state_logger import StateLogger
 
 
 def pad_action(act, act_param, action_config):
-    params = np.array([np.zeros((i,), dtype=np.float32) for i in action_config['cont_act_spaces']])
-    params[act][:] = act_param
+    if 0 in action_config['cont_act_spaces']:
+        temp_cont_spaces = np.delete(action_config['cont_act_spaces'], np.where(action_config['cont_act_spaces'] == 0))
+        params = np.array([np.zeros((i,), dtype=np.float32) for i in temp_cont_spaces])
+    else:
+        params = np.array([np.zeros((i,), dtype=np.float32) for i in action_config['cont_act_spaces']])
 
+    if len(act_param) > 0:
+        params[act][:] = act_param
+        
     return (act, params)
 
 
@@ -83,7 +89,13 @@ def main(env_config: Dict,
             obs = np.append(obs[:-1][0],obs[-1]/200)
 
         elif env_name == 'Move':
-            obs = obs
+            new_obs = []
+            for value in obs:
+                if isinstance(value, (float, int)):
+                    new_obs.append(value)
+                else:
+                    new_obs.append(float(value[0]))
+            obs = new_obs
 
         obs = np.array(obs)
         obs = obs.reshape(-1)
@@ -115,6 +127,16 @@ def main(env_config: Dict,
 
             elif env_name == 'Move':
                 obs, reward, done, _ = env.step(action)
+                if isinstance(reward, list):
+                    reward = reward[0]
+                    
+                new_obs = []
+                for value in obs:
+                    if isinstance(value, (float, int)):
+                        new_obs.append(value)
+                    else:
+                        new_obs.append(float(value[0]))
+                obs = new_obs
 
             obs = np.array(obs)
             obs = obs.reshape(-1)
@@ -183,7 +205,7 @@ if __name__ == '__main__':
     21: HHQN,    22: 
     """
     
-    env_switch = 2
+    env_switch = 3
     agent_switch = 9
 
     env_config, agent_config = env_agent_config(env_switch, agent_switch)

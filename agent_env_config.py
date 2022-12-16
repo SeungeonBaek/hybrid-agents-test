@@ -4,9 +4,9 @@
 
 def env_agent_config(env_switch, agent_switch):
     if env_switch == 1:
-        env_config = {'env_name': 'Goal', 'seed': 777, 'render': False, 'max_step': 1000, 'max_episode': 200000}
+        env_config = {'env_name': 'Goal', 'seed': 777, 'render': False, 'max_step': 1000, 'max_episode': 1000000}
     elif env_switch == 2:
-        env_config = {'env_name': 'Platform', 'seed': 777, 'render': False, 'max_step': 1000, 'max_episode': 800000}
+        env_config = {'env_name': 'Platform', 'seed': 777, 'render': False, 'max_step': 1000, 'max_episode': 1000000}
     elif env_switch == 3:
         env_config = {'env_name': 'Move', 'seed': 777, 'render': False, 'max_step': 1000, 'max_episode': 5000}
     elif env_switch == 4:

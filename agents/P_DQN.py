@@ -223,21 +223,27 @@ class Agent:
 
         ## gaussian action noise
         if self.update_step > self.warm_up:
-            std = tf.convert_to_tensor([self.std]*self.cont_act_spaces[disc_action], dtype=tf.float32)
-            dist = tfp.distributions.Normal(loc=tf.zeros(shape=(self.cont_act_spaces[disc_action]), dtype=tf.float32), scale=std)
-            noises = tf.squeeze(dist.sample())
-            noises = noises.numpy()
-            self.std = self.std * self.noise_reduce_rate
-            if self.std < self.min_std:
-                self.std = self.min_std
+            if self.cont_act_spaces[disc_action] == 0:
+                pass
+            else:
+                std = tf.convert_to_tensor([self.std]*self.cont_act_spaces[disc_action], dtype=tf.float32)
+                dist = tfp.distributions.Normal(loc=tf.zeros(shape=(self.cont_act_spaces[disc_action]), dtype=tf.float32), scale=std)
+                noises = tf.squeeze(dist.sample())
+                noises = noises.numpy()
+                self.std = self.std * self.noise_reduce_rate
+                if self.std < self.min_std:
+                    self.std = self.min_std
 
-            cont_actions[offset_start:offset_end] += np.clip(noises, - self.noise_clip, self.noise_clip)
+                cont_actions[offset_start:offset_end] += np.clip(noises, - self.noise_clip, self.noise_clip)
         else:
             pass
-
-        chosen_cont_action = np.clip(cont_actions[offset_start:offset_end], -1, 1)
-        chosen_cont_action = (chosen_cont_action + 1)*0.5
-        chosen_cont_action = (self.cont_act_max[disc_action] - self.cont_act_min[disc_action]) * chosen_cont_action + self.cont_act_min[disc_action]
+        
+        if self.cont_act_spaces[disc_action] == 0:
+            chosen_cont_action = []
+        else:
+            chosen_cont_action = np.clip(cont_actions[offset_start:offset_end], -1, 1)
+            chosen_cont_action = (chosen_cont_action + 1)*0.5
+            chosen_cont_action = (self.cont_act_max[disc_action] - self.cont_act_min[disc_action]) * chosen_cont_action + self.cont_act_min[disc_action]
 
         return disc_action, chosen_cont_action, cont_actions
 

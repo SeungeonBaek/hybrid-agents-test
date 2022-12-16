@@ -61,6 +61,7 @@ def platform_env_test():
     print(f"########## action ##########")
     print(f'action_space : {env.action_space}')
     print(env.action_space.spaces[0])
+    print(env.action_space.spaces[1])
     print(env.action_space.spaces[1].spaces[0], env.action_space.spaces[1].spaces[1], env.action_space.spaces[1].spaces[2])
     print(f'discrete_action_space: {env.action_space.spaces[0].n}, \
         continuous_action_space: {env.action_space.spaces[1].spaces[0].shape[0] + env.action_space.spaces[1].spaces[1].shape[0] + env.action_space.spaces[1].spaces[2].shape[0]}')
@@ -119,12 +120,13 @@ def move_env_test():
     print(f"########## action ##########")
     print(f'action_space : {env.action_space}')
     print(env.action_space.spaces[0])
-    print(env.action_space.spaces[1].shape)
+    print(env.action_space.spaces[1])
+    print(env.action_space.spaces[1].shape[0])
     print(f'discrete_action_space: {env.action_space.spaces[0].n}, \
         continuous_action_space: {env.action_space.spaces[1].shape[0]}')
 
     action_config = {'disc_act_spaces': env.action_space.spaces[0].n, \
-                'cont_act_spaces': np.array([1, 1], dtype=np.float32), \
+                'cont_act_spaces': np.array([1, 1, 0], dtype=np.int32), \
                 'disc_act_max'   : 0, \
                 'disc_act_min'   : 0, \
                 'cont_act_max'   : np.concatenate([env.action_space.spaces[1].high]).ravel(), \
@@ -142,7 +144,7 @@ def move_env_test():
     for i in range(10):
         action = env.action_space.sample()
         obs, reward, done, info = env.step(action)
-        env.render()
+        # env.render()
 
     print(f'action: {action}')
     print(f'obs: {obs}')
@@ -269,7 +271,7 @@ if __name__ == "__main__":
     4: Hard Goal, 5: Hard move, 6: Domestic
     """
 
-    env_switch = 2
+    env_switch = 3
 
     if env_switch == 1:
         goal_env_test()
